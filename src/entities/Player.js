@@ -68,9 +68,9 @@ export class Player {
     // DOWN (Backward) = Math.PI
     // LEFT = -Math.PI / 2
     if (dir === 'UP') this.facingAngle = 0;
-    else if (dir === 'RIGHT') this.facingAngle = Math.PI / 2;
+    else if (dir === 'RIGHT') this.facingAngle = -Math.PI / 2;
     else if (dir === 'DOWN') this.facingAngle = Math.PI;
-    else if (dir === 'LEFT') this.facingAngle = -Math.PI / 2;
+    else if (dir === 'LEFT') this.facingAngle = Math.PI / 2;
 
     this.mesh.rotation.y = this.facingAngle;
 
@@ -89,9 +89,9 @@ export class Player {
     const nextZ = this.gridZ + dirZ;
 
     // Check walkable bounds on dock / shore
-    // Walkable zone on dock: X: -3 to 3, Z: -5 to 1
-    // Walkable shore bank: X: -9 to 9, Z: -5 to -2
-    const onDock = Math.abs(nextX) <= 3 && nextZ >= -5 && nextZ <= 1;
+    // Walkable zone on dock: X: -2 to 2, Z: -4 to 1 (5x6 wooden pier)
+    // Walkable shore bank: X: -9 to 9, Z: -6 to -2 (wide grassy bank)
+    const onDock = Math.abs(nextX) <= 2 && nextZ >= -4 && nextZ <= 1;
     const onBank = Math.abs(nextX) <= 9 && nextZ >= -6 && nextZ <= -2;
 
     // Floating platforms in water (Z: 2 to 8)
