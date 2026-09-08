@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SkySystem } from './SkySystem.js';
 
 export const WEATHER_TYPES = [
   { id: 'sunny', name: '쾌청한 맑음', icon: '☀️', buff: '기본 상태' },
@@ -52,6 +53,9 @@ export class WeatherSystem {
     // 6. Fisherman Night Lantern Light
     this.lanternLight = new THREE.PointLight(0xf59e0b, 0, 10, 2);
     this.scene.add(this.lanternLight);
+
+    // 7. Dynamic Atmospheric Sky System (Gradient Dome, Voxel Clouds, Sun, Moon, Stars)
+    this.skySystem = new SkySystem(this.game);
   }
 
   createRainSystem() {
@@ -174,6 +178,9 @@ export class WeatherSystem {
     this.isNight = (type === 'night');
 
     this.applyLightingAndFog();
+    if (this.skySystem) {
+      this.skySystem.setWeather(type);
+    }
     this.game.ui.updateWeatherIndicator(type, this.isNight);
   }
 
@@ -206,12 +213,12 @@ export class WeatherSystem {
     } else if (type === 'sunset') {
       // 🌅 Golden Sunset
       ambientLight.color.setHex(0xf97316);
-      ambientLight.intensity = 0.85;
+      ambientLight.intensity = 0.95;
       dirLight.color.setHex(0xfbbf24);
-      dirLight.intensity = 1.35;
-      this.scene.fog.color.setHex(0x7c2d12);
-      this.scene.fog.density = 0.018;
-      this.scene.background.setHex(0x431407);
+      dirLight.intensity = 1.45;
+      this.scene.fog.color.setHex(0xc2410c);
+      this.scene.fog.density = 0.012;
+      this.scene.background.setHex(0x7c2d12);
       this.lanternLight.intensity = 1.2;
     } else if (type === 'storm') {
       // ⛈️ Thunderstorm
@@ -300,6 +307,11 @@ export class WeatherSystem {
     if (this.lanternLight.intensity > 0) {
       this.lanternLight.position.set(playerPos.x + 0.3, playerPos.y + 1.2, playerPos.z + 0.3);
     }
+
+    // 5. Update Dynamic Atmospheric Sky (Dome, Voxel Clouds, Sun, Moon, Stars)
+    if (this.skySystem) {
+      this.skySystem.update(dt, this.game.renderer.camera);
+    }
   }
 
   updateRain(dt, centerPos) {
@@ -379,6 +391,9 @@ export class WeatherSystem {
     if (this.lightningTimer > 5 + Math.random() * 8) {
       this.lightningTimer = 0;
       this.lightningLight.intensity = 4.0;
+      if (this.skySystem) {
+        this.skySystem.triggerLightningFlash();
+      }
       this.game.audio.playThunder();
 
       setTimeout(() => {

@@ -39,11 +39,11 @@ export class Renderer {
       this.frustumSize / 2,
       -this.frustumSize / 2,
       -50,
-      100
+      300
     );
 
     // 2. Perspective Camera (for Shoulder 3rd-person & Focus View)
-    this.perspCamera = new THREE.PerspectiveCamera(55, aspect, 0.1, 100);
+    this.perspCamera = new THREE.PerspectiveCamera(55, aspect, 0.1, 300);
 
     // Camera Mode State
     this.cameraModeIndex = 0;
@@ -131,9 +131,9 @@ export class Renderer {
       this.targetCamPos.set(px * 0.45 - 1.8, 16, pz + 4.5 - 11.5);
       this.targetLookAt.set(px * 0.45, 0, pz + 4.5);
     } else if (this.cameraMode === 'shoulder') {
-      // 2. Immersive 3rd-Person Over-the-Shoulder View
-      this.targetCamPos.set(px + 0.35, 1.85, pz - 2.8);
-      this.targetLookAt.set(px, 0.6, pz + 6.0);
+      // 2. Immersive 3rd-Person Over-the-Shoulder View (Panoramic Sky View)
+      this.targetCamPos.set(px + 0.35, 1.55, pz - 2.8);
+      this.targetLookAt.set(px, 1.35, pz + 9.0);
     } else if (this.cameraMode === 'focus') {
       // 3. Bobber Close-up Fishing Focus View
       const bx = bobberPos ? bobberPos.x : px;

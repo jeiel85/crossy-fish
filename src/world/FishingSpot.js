@@ -28,6 +28,7 @@ export class FishingSpot {
     this.buildGroundAndPier();
     this.buildWaterBody();
     this.buildDecorations();
+    this.buildHorizonVista();
     this.spawnFish(6);
   }
 
@@ -185,6 +186,66 @@ export class FishingSpot {
       rock.rotation.y = Math.random() * Math.PI;
       rock.castShadow = true;
       this.group.add(rock);
+    });
+  }
+
+  buildHorizonVista() {
+    const { water, ground, groundDark } = this.biome.colors;
+
+    // 1. Extended deep background water plane (Z: 15 to 55, X: -60 to 60)
+    const extWaterGeo = new THREE.PlaneGeometry(130, 44);
+    const extWaterMat = new THREE.MeshLambertMaterial({
+      color: water,
+      transparent: true,
+      opacity: 0.78
+    });
+    const extWater = new THREE.Mesh(extWaterGeo, extWaterMat);
+    extWater.rotation.x = -Math.PI / 2;
+    extWater.position.set(0, -0.05, 36);
+    this.group.add(extWater);
+
+    // 2. Distant Low-Profile Voxel Mountain Ridges on the far horizon (Z: 48 to 60)
+    const baseMat = new THREE.MeshLambertMaterial({ color: groundDark });
+    const peakColor = this.biome.id === 'frozen_fjord' ? 0xffffff : ground;
+    const topMat = new THREE.MeshLambertMaterial({ color: peakColor });
+
+    const mountainPeaks = [
+      { x: -45, z: 54, w: 24, h: 5.5, d: 14 },
+      { x: -26, z: 56, w: 26, h: 7.0, d: 16 },
+      { x: -8,  z: 52, w: 22, h: 5.0, d: 14 },
+      { x: 10,  z: 55, w: 24, h: 6.5, d: 15 },
+      { x: 28,  z: 53, w: 22, h: 5.2, d: 14 },
+      { x: 46,  z: 56, w: 26, h: 6.0, d: 16 }
+    ];
+
+    mountainPeaks.forEach(p => {
+      // Lower tiered mountain block
+      const bGeo = new THREE.BoxGeometry(p.w, p.h, p.d);
+      const bMesh = new THREE.Mesh(bGeo, baseMat);
+      bMesh.position.set(p.x, p.h / 2 - 1.2, p.z);
+      this.group.add(bMesh);
+
+      // Upper snow/rock tier peak
+      const tGeo = new THREE.BoxGeometry(p.w * 0.55, p.h * 0.5, p.d * 0.55);
+      const tMesh = new THREE.Mesh(tGeo, topMat);
+      tMesh.position.set(p.x, p.h - 0.8, p.z);
+      this.group.add(tMesh);
+    });
+
+    // 3. Far shore treeline silhouettes (Z: 44 to 48)
+    const farTreePositions = [
+      [-24, 0, 46],
+      [-15, 0, 47],
+      [-4,  0, 45],
+      [6,   0, 46],
+      [18,  0, 47],
+      [27,  0, 45]
+    ];
+    farTreePositions.forEach(([fx, fy, fz]) => {
+      const tree = createTreeModel(this.biome);
+      tree.position.set(fx, fy, fz);
+      tree.scale.set(0.9, 0.9, 0.9);
+      this.group.add(tree);
     });
   }
 
