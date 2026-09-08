@@ -46,10 +46,10 @@ export class Player {
   }
 
   // Handle directional input (Up, Down, Left, Right)
-  // Implements the authentic Crossy Road mechanic:
-  // "방향을 반대로 하거나 꺾으면 처음에는 한칸을 진행하지 않고 방향만 전환"
+  // Authentic Crossy Road mechanic:
+  // Turning and hopping occur simultaneously on 1 input!
   handleDirection(dir) {
-    if (this.isHopping || this.isTurning) return;
+    if (this.isHopping) return;
     const mechanic = this.game.fishingMechanic;
     if (mechanic && (mechanic.state === 'REELING' || mechanic.state === 'STRIKE_WINDOW')) {
       return; // In active fish fight
@@ -60,13 +60,20 @@ export class Player {
       mechanic.reset();
     }
 
-    // 1. If changing direction: TURN IN PLACE ONLY!
-    if (this.facingDir !== dir) {
-      this.turnTo(dir);
-      return;
-    }
+    this.facingDir = dir;
 
-    // 2. If already facing this direction: HOP 1 TILE FORWARD!
+    // Angle mapping for screen-accurate direction:
+    // UP (Forward) = 0
+    // RIGHT = Math.PI / 2
+    // DOWN (Backward) = Math.PI
+    // LEFT = -Math.PI / 2
+    if (dir === 'UP') this.facingAngle = 0;
+    else if (dir === 'RIGHT') this.facingAngle = Math.PI / 2;
+    else if (dir === 'DOWN') this.facingAngle = Math.PI;
+    else if (dir === 'LEFT') this.facingAngle = -Math.PI / 2;
+
+    this.mesh.rotation.y = this.facingAngle;
+
     let dirX = 0;
     let dirZ = 0;
     if (dir === 'UP') dirZ = 1;
@@ -75,37 +82,6 @@ export class Player {
     else if (dir === 'RIGHT') dirX = 1;
 
     this.hop(dirX, dirZ);
-  }
-
-  turnTo(newDir) {
-    this.facingDir = newDir;
-    this.startAngle = this.mesh.rotation.y;
-
-    // Angle mapping for screen-accurate direction:
-    // UP (Forward) = 0
-    // RIGHT = Math.PI / 2
-    // DOWN (Backward) = Math.PI
-    // LEFT = -Math.PI / 2
-    if (newDir === 'UP') this.targetAngle = 0;
-    else if (newDir === 'RIGHT') this.targetAngle = Math.PI / 2;
-    else if (newDir === 'DOWN') this.targetAngle = Math.PI;
-    else if (newDir === 'LEFT') this.targetAngle = -Math.PI / 2;
-
-    // Ensure shortest angular interpolation
-    let diff = this.targetAngle - this.startAngle;
-    while (diff < -Math.PI) diff += Math.PI * 2;
-    while (diff > Math.PI) diff -= Math.PI * 2;
-    this.targetAngle = this.startAngle + diff;
-
-    this.isTurning = true;
-    this.turnProgress = 0;
-
-    // Cute tiny pivot jump & sound
-    this.game.audio.playHop();
-
-    if (navigator.vibrate) {
-      try { navigator.vibrate(10); } catch (_) {}
-    }
   }
 
   hop(dirX, dirZ) {
