@@ -23,7 +23,7 @@ export class Renderer {
 
     this.container.appendChild(this.renderer.domElement);
 
-    // Camera setup: Orthographic Camera for classic Crossy Road perspective
+    // Camera setup: Orthographic Camera aligned with screen axes
     this.frustumSize = 15;
     const aspect = window.innerWidth / window.innerHeight;
     this.camera = new THREE.OrthographicCamera(
@@ -35,9 +35,10 @@ export class Renderer {
       100
     );
 
-    // Standard Crossy Road 45-degree angle
-    this.cameraOffset = new THREE.Vector3(-14, 18, -14);
-    this.cameraTarget = new THREE.Vector3(0, 0, 0);
+    // Screen-aligned Crossy Road isometric angle:
+    // Centered behind on X so Up is Up, Down is Down, Left is Left, Right is Right!
+    this.cameraOffset = new THREE.Vector3(-1.8, 16, -11.5);
+    this.cameraTarget = new THREE.Vector3(0, 0, 1.5);
 
     this.camera.position.copy(this.cameraOffset);
     this.camera.lookAt(this.cameraTarget);

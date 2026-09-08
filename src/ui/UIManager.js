@@ -109,9 +109,23 @@ export class UIManager {
     this.btnActionFish.addEventListener('touchstart', handleActionDown, { passive: false });
     window.addEventListener('touchend', handleActionUp, { passive: false });
 
-    // 5. Keyboard Spacebar
+    // 5. Directional Movement & Keyboard Controls
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && !e.repeat) {
+      if (this.game.state !== 'PLAYING') return;
+
+      if (e.code === 'KeyW' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        this.game.player.handleDirection('UP');
+      } else if (e.code === 'KeyS' || e.code === 'ArrowDown') {
+        e.preventDefault();
+        this.game.player.handleDirection('DOWN');
+      } else if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+        e.preventDefault();
+        this.game.player.handleDirection('LEFT');
+      } else if (e.code === 'KeyD' || e.code === 'ArrowRight') {
+        e.preventDefault();
+        this.game.player.handleDirection('RIGHT');
+      } else if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();
         const mechanic = this.game.fishingMechanic;
         if (mechanic.state === 'IDLE') mechanic.castDefault();
@@ -122,9 +136,9 @@ export class UIManager {
         }
       } else if (e.code === 'KeyB') {
         this.btnAutoplay.click();
-      } else if (e.code === 'ArrowLeft') {
+      } else if (e.code === 'BracketLeft') {
         this.game.prevStage();
-      } else if (e.code === 'ArrowRight') {
+      } else if (e.code === 'BracketRight') {
         this.game.nextStage();
       }
     });
@@ -138,6 +152,47 @@ export class UIManager {
         }
       }
     });
+
+    // Mobile D-Pad Buttons
+    document.querySelectorAll('.dpad-btn').forEach((btn) => {
+      const handleDpad = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const dir = btn.dataset.dir;
+        if (dir) this.game.player.handleDirection(dir);
+      };
+      btn.addEventListener('touchstart', handleDpad, { passive: false });
+      btn.addEventListener('click', handleDpad);
+    });
+
+    // Touch Swipe Gestures
+    let touchStartX = 0;
+    let touchStartY = 0;
+    window.addEventListener('touchstart', (e) => {
+      if (e.target.closest('#hud') || e.target.closest('.popup-modal')) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener('touchend', (e) => {
+      if (e.target.closest('#hud') || e.target.closest('.popup-modal')) return;
+      if (this.game.state !== 'PLAYING') return;
+
+      const deltaX = e.changedTouches[0].clientX - touchStartX;
+      const deltaY = e.changedTouches[0].clientY - touchStartY;
+      const absX = Math.abs(deltaX);
+      const absY = Math.abs(deltaY);
+
+      if (Math.max(absX, absY) > 26) {
+        if (absX > absY) {
+          if (deltaX > 0) this.game.player.handleDirection('RIGHT');
+          else this.game.player.handleDirection('LEFT');
+        } else {
+          if (deltaY < 0) this.game.player.handleDirection('UP');
+          else this.game.player.handleDirection('DOWN');
+        }
+      }
+    }, { passive: true });
 
     // 6. Auto-Fishing Bot
     this.btnAutoplay.addEventListener('click', (e) => {

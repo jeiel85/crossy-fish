@@ -3,7 +3,7 @@ import { Renderer } from './Renderer.js';
 import { AudioManager } from './AudioManager.js';
 import { BIOMES, getBiomeByIndex } from '../world/Biomes.js';
 import { FishingSpot } from '../world/FishingSpot.js';
-import { createFishermanModel } from '../entities/VoxelModels.js';
+import { Player } from '../entities/Player.js';
 import { FishingMechanic } from '../systems/FishingMechanic.js';
 import { WeatherSystem } from '../systems/WeatherSystem.js';
 import { AutoPlayAI } from '../systems/AutoPlayAI.js';
@@ -24,15 +24,13 @@ export class Game {
     this.fishdex = new Fishdex();
     this.leaderboard = new Leaderboard();
 
-    // 2. Stage & Fisherman Setup
+    // 2. Stage & Player Setup
     this.currentStageIndex = 0;
     this.currentBiome = BIOMES[0];
     this.currentSpot = null;
 
-    // Fisherman on the pier
-    this.fisherman = createFishermanModel();
-    this.fisherman.position.set(0, 0.15, -1.0);
-    this.scene.add(this.fisherman);
+    // Crossy Road Fisherman Player
+    this.player = new Player(this);
 
     // 3. Mechanics & Systems
     this.fishingMechanic = new FishingMechanic(this);
@@ -73,6 +71,7 @@ export class Game {
 
     this.currentSpot = new FishingSpot(this.currentBiome, this);
     this.fishingMechanic.reset();
+    this.player.reset();
 
     // Adjust camera & lighting for the scenic diorama
     this.weatherSystem.applyLightingAndFog();
@@ -141,7 +140,10 @@ export class Game {
     const dt = Math.min(this.clock.getDelta(), 0.1);
 
     if (this.state === 'PLAYING') {
-      // 1. Update spot & swimming fish
+      // 1. Update player hop & turn animations
+      this.player.update(dt);
+
+      // 2. Update spot & swimming fish
       const isBobberInWater = this.fishingMechanic.state === 'WAITING_BITE' || this.fishingMechanic.state === 'STRIKE_WINDOW';
       const bobberPos = isBobberInWater ? this.fishingMechanic.bobber.position : null;
 
@@ -149,25 +151,26 @@ export class Game {
         this.currentSpot.update(dt, bobberPos, isBobberInWater);
       }
 
-      // 2. Update Fishing Mechanic
+      // 3. Update Fishing Mechanic
       this.fishingMechanic.update(dt);
 
-      // 3. Update Weather
-      const fakePlayer = { mesh: this.fisherman };
-      this.weatherSystem.update(dt, fakePlayer);
+      // 4. Update Weather
+      this.weatherSystem.update(dt, this.player);
 
-      // 4. Update Auto-Fishing AI
+      // 5. Update Auto-Fishing AI
       this.autoPlayAI.update(dt);
 
-      // 5. Idle breathing for fisherman
+      // 6. Idle breathing for fisherman
       const time = performance.now() * 0.003;
-      if (this.fisherman.userData.rodPivot && this.fishingMechanic.state === 'IDLE') {
-        this.fisherman.userData.rodPivot.rotation.x = Math.sin(time) * 0.05;
+      if (this.player.mesh.userData.rodPivot && this.fishingMechanic.state === 'IDLE') {
+        this.player.mesh.userData.rodPivot.rotation.x = Math.sin(time) * 0.05;
       }
     }
 
-    // Camera centered on scenic pier
-    this.renderer.updateCamera({ x: 0, z: 4.5 }, dt);
+    // Camera smoothly follows player in scenic spot
+    const camTargetZ = THREE.MathUtils.clamp(this.player.mesh.position.z + 4.5, 2.5, 7.5);
+    const camTargetX = this.player.mesh.position.x * 0.45;
+    this.renderer.updateCamera({ x: camTargetX, z: camTargetZ }, dt);
     this.renderer.render();
   }
 }

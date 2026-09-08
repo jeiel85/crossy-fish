@@ -108,10 +108,8 @@ export class FishingMechanic {
   }
 
   castDefault() {
-    // Cast forward into hot spot with some slight randomness
-    const rx = (Math.random() - 0.5) * 6;
-    const rz = 4.5 + Math.random() * 5.5;
-    this.castTo(rx, rz);
+    const target = this.game.player.getForwardWaterTarget();
+    this.castTo(target.x, target.z);
   }
 
   update(dt) {
@@ -296,9 +294,11 @@ export class FishingMechanic {
 
   getRodTipPosition() {
     const tip = new THREE.Vector3();
-    const fisherman = this.game.fisherman;
+    const fisherman = this.game.player ? this.game.player.mesh : null;
     if (fisherman && fisherman.userData.bobberPivot) {
       fisherman.userData.bobberPivot.getWorldPosition(tip);
+    } else if (fisherman) {
+      tip.copy(fisherman.position).add(new THREE.Vector3(0.3, 1.4, 0.4));
     } else {
       tip.set(0.3, 1.4, -0.6);
     }
