@@ -13,7 +13,8 @@ export class SkySystem {
       sunny: {
         top: new THREE.Color(0x0284c7),      // Deep crisp sky blue
         bottom: new THREE.Color(0xbae6fd),   // Hazy azure horizon
-        sunColor: new THREE.Color(0xfffbeb),
+        sunColor: new THREE.Color(0xfacc15), // Vibrant bright solar yellow (distinct from clouds!)
+        sunGlowColor: new THREE.Color(0xf59e0b), // Warm amber corona glow
         sunVisible: true,
         sunElevation: 22,
         moonVisible: false,
@@ -24,7 +25,8 @@ export class SkySystem {
       sunset: {
         top: new THREE.Color(0x4c0519),      // Deep sunset crimson-purple
         bottom: new THREE.Color(0xf97316),   // Fiery amber sunset horizon
-        sunColor: new THREE.Color(0xfbbf24), // Sinking golden sun
+        sunColor: new THREE.Color(0xf97316), // Sinking warm orange-gold sun
+        sunGlowColor: new THREE.Color(0xd97706),
         sunVisible: true,
         sunElevation: 9,
         moonVisible: true,
@@ -49,9 +51,10 @@ export class SkySystem {
       cherry: {
         top: new THREE.Color(0xbe185d),      // Cherry blossom rose
         bottom: new THREE.Color(0xfce7f3),   // Blush petal mist
-        sunColor: new THREE.Color(0xfef08a),
+        sunColor: new THREE.Color(0xfde047), // Sunny spring yellow
+        sunGlowColor: new THREE.Color(0xfbbf24),
         sunVisible: true,
-        sunElevation: 30,
+        sunElevation: 22,
         moonVisible: false,
         starsVisible: false,
         cloudColor: new THREE.Color(0xfdf2f8), // Soft pink cloud
@@ -78,9 +81,10 @@ export class SkySystem {
       snow: {
         top: new THREE.Color(0x38bdf8),      // Frosty arctic cyan
         bottom: new THREE.Color(0xf0f9ff),   // Frosted snow-white haze
-        sunColor: new THREE.Color(0xffffff),
+        sunColor: new THREE.Color(0xfef08a), // Pale winter yellow
+        sunGlowColor: new THREE.Color(0xfacc15),
         sunVisible: true,
-        sunElevation: 25,
+        sunElevation: 20,
         moonVisible: false,
         starsVisible: false,
         cloudColor: new THREE.Color(0xf8fafc),
@@ -168,20 +172,20 @@ export class SkySystem {
   }
 
   createSunAndMoon() {
-    // A. 3D Voxel Sun
+    // A. 3D Voxel Sun (Positioned in open upper-left sky, avoiding top HUD)
     this.sunGroup = new THREE.Group();
-    this.sunGroup.position.set(-14, 32, 55);
+    this.sunGroup.position.set(22, 19, 45);
 
     const sunCoreGeo = new THREE.BoxGeometry(5.2, 5.2, 2.2);
-    this.sunCoreMat = new THREE.MeshBasicMaterial({ color: 0xfffbeb });
+    this.sunCoreMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 }); // Warm golden yellow
     this.sunCore = new THREE.Mesh(sunCoreGeo, this.sunCoreMat);
     this.sunGroup.add(this.sunCore);
 
-    const sunGlowGeo = new THREE.BoxGeometry(7.0, 7.0, 2.5);
+    const sunGlowGeo = new THREE.BoxGeometry(7.2, 7.2, 2.5);
     this.sunGlowMat = new THREE.MeshBasicMaterial({
-      color: 0xfef08a,
+      color: 0xf59e0b, // Amber corona glow
       transparent: true,
-      opacity: 0.42
+      opacity: 0.52
     });
     this.sunGlow = new THREE.Mesh(sunGlowGeo, this.sunGlowMat);
     this.sunGroup.add(this.sunGlow);
@@ -323,6 +327,7 @@ export class SkySystem {
     this.targetCloudColor.copy(p.cloudColor);
 
     if (p.sunColor) this.sunCoreMat.color.copy(p.sunColor);
+    if (p.sunGlowColor) this.sunGlowMat.color.copy(p.sunGlowColor);
     if (p.moonColor) this.moonGroup.children[0].material.color.copy(p.moonColor);
   }
 
