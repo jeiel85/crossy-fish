@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Crossy Fish | 길건너 친구들 3D 낚시 게임</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <!-- 3D Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- In-Game HUD -->
+  <div id="hud">
+    <!-- Top Left: Score & Fish Counts -->
+    <div class="hud-top-left">
+      <div class="hud-card score-card">
+        <span class="label">SCORE</span>
+        <span id="score-display" class="value">0</span>
+      </div>
+      <div class="hud-card fish-card">
+        <span class="icon">🐟</span>
+        <span id="fish-display" class="value">0</span>
+      </div>
+      <div class="hud-card combo-card" id="combo-badge" style="display: none;">
+        <span id="combo-text">COMBO x2!</span>
+      </div>
+    </div>
+
+    <!-- Top Center: Current Biome / Stage -->
+    <div class="hud-top-center">
+      <div id="stage-badge" class="stage-badge">
+        <span id="stage-icon">🌲</span>
+        <span id="stage-name">에메랄드 시냇가</span>
+        <span id="stage-step" class="stage-step">STAGE 1</span>
+      </div>
+    </div>
+
+    <!-- Top Right: Quick Action Controls -->
+    <div class="hud-top-right">
+      <button id="btn-weather" class="hud-btn" title="날씨 변경 (Weather)">
+        <span id="weather-icon">☀️</span>
+      </button>
+      <button id="btn-time-cycle" class="hud-btn" title="낮/밤 변경 (Day/Night)">
+        <span id="time-icon">🌤️</span>
+      </button>
+      <button id="btn-sound" class="hud-btn" title="사운드 켜기/끄기 (Sound)">
+        <span id="sound-icon">🔊</span>
+      </button>
+      <button id="btn-autoplay" class="hud-btn bot-btn" title="AI 자동 플레이 모드 (Auto-Play)">
+        <span class="bot-icon">🤖</span>
+        <span class="bot-label">BOT: OFF</span>
+      </button>
+      <button id="btn-leaderboard-open" class="hud-btn" title="온라인 랭킹 (Leaderboard)">
+        <span>🏆</span>
+      </button>
+      <button id="btn-help-open" class="hud-btn" title="게임 방법 (How to Play)">
+        <span>❓</span>
+      </button>
+    </div>
+
+    <!-- Bottom Left / Mobile D-Pad Control -->
+    <div id="mobile-dpad" class="mobile-dpad">
+      <button class="dpad-btn dpad-up" data-dir="up">▲</button>
+      <div class="dpad-mid">
+        <button class="dpad-btn dpad-left" data-dir="left">◀</button>
+        <div class="dpad-center">●</div>
+        <button class="dpad-btn dpad-right" data-dir="right">▶</button>
+      </div>
+      <button class="dpad-btn dpad-down" data-dir="down">▼</button>
+    </div>
+
+    <!-- Bottom Right: Cast / Reel Action Button -->
+    <div class="hud-bottom-right">
+      <button id="btn-action-fish" class="action-btn" title="낚시하기 / 낚아채기 (Spacebar / Tap)">
+        <span class="btn-icon">🎣</span>
+        <span class="btn-text">CAST</span>
+      </button>
+    </div>
+
+    <!-- Eagle / Impatience Warning Indicator -->
+    <div id="danger-bar-container">
+      <div id="danger-bar"></div>
+    </div>
+  </div>
+
+  <!-- Fishing Minigame Overlay / Notification Banner -->
+  <div id="fishing-overlay" class="fishing-overlay" style="display: none;">
+    <div class="catch-alert" id="catch-alert">
+      <div class="alert-exclamation">❗</div>
+      <div class="alert-msg">입질이 왔다! (TAP TO REEL!)</div>
+      <div class="reel-gauge-bg">
+        <div class="reel-gauge-fill" id="reel-gauge-fill"></div>
+        <div class="reel-target-zone"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Catch Announcement Card -->
+  <div id="catch-popup" class="catch-popup" style="display: none;">
+    <div class="catch-popup-content">
+      <div class="catch-stars" id="catch-stars">★★★</div>
+      <div class="catch-fish-emoji" id="catch-emoji">🐟</div>
+      <div class="catch-fish-name" id="catch-name">무지개 송어</div>
+      <div class="catch-fish-rarity" id="catch-rarity">RARE CATCH!</div>
+      <div class="catch-fish-pts" id="catch-pts">+150 PTS</div>
+    </div>
+  </div>
+
+  <!-- Weather Selector Dropdown Modal -->
+  <div id="weather-modal" class="popup-modal" style="display: none;">
+    <div class="popup-content weather-popup">
+      <h3>🌤️ 날씨 & 환경 선택</h3>
+      <div class="weather-grid">
+        <button class="weather-opt active" data-weather="clear">
+          <span class="opt-icon">☀️</span>
+          <span>맑음 (Sunny)</span>
+        </button>
+        <button class="weather-opt" data-weather="rain">
+          <span class="opt-icon">🌧️</span>
+          <span>비 & 천둥 (Rain)</span>
+        </button>
+        <button class="weather-opt" data-weather="snow">
+          <span class="opt-icon">❄️</span>
+          <span>눈 (Snow)</span>
+        </button>
+        <button class="weather-opt" data-weather="fog">
+          <span class="opt-icon">🌫️</span>
+          <span>안개 (Misty Fog)</span>
+        </button>
+      </div>
+      <div class="time-toggle-row">
+        <span>시간대:</span>
+        <button id="btn-toggle-night" class="btn-secondary">🌙 낮 / 밤 전환</button>
+      </div>
+      <button class="btn-close-modal" id="btn-close-weather">닫기</button>
+    </div>
+  </div>
+
+  <!-- Online Leaderboard Modal -->
+  <div id="leaderboard-modal" class="popup-modal" style="display: none;">
+    <div class="popup-content leaderboard-popup">
+      <div class="modal-header">
+        <h3>🏆 글로벌 온라인 랭킹</h3>
+        <button class="btn-close-x" id="btn-close-leaderboard">&times;</button>
+      </div>
+      <div class="leaderboard-tabs">
+        <button class="tab-btn active" id="tab-global">🌐 온라인 랭킹 (Global)</button>
+        <button class="tab-btn" id="tab-local">💾 내 최고 기록 (Local)</button>
+      </div>
+      <div class="leaderboard-list-wrap">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>순위</th>
+              <th>강태공 (닉네임)</th>
+              <th>점수</th>
+              <th>스테이지</th>
+              <th>물고기</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-rows">
+            <tr><td colspan="5" class="loading-td">랭킹 불러오는 중... 🎣</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-refresh-ranks" class="btn-secondary">🔄 새로고침</button>
+        <button class="btn-primary" id="btn-close-ranks">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help / Instructions Modal -->
+  <div id="help-modal" class="popup-modal" style="display: none;">
+    <div class="popup-content help-popup">
+      <div class="modal-header">
+        <h3>📖 게임 방법 & 조작법</h3>
+        <button class="btn-close-x" id="btn-close-help">&times;</button>
+      </div>
+      <div class="help-body">
+        <div class="help-section">
+          <h4>🎮 조작 가이드</h4>
+          <ul>
+            <li><strong>이동</strong>: 키보드 <code>W A S D</code> / <code>방향키</code> 또는 화면 스와이프 / D-패드</li>
+            <li><strong>낚시</strong>: 물가나 통나무/선착장에서 <code>스페이스바</code> 또는 <code>🎣 CAST</code> 버튼</li>
+            <li><strong>입질 시</strong>: 느낌표(!)가 뜨면 즉시 버튼을 눌러 물고기를 낚아채세요!</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h4>🌊 위험 요소 & 팁</h4>
+          <ul>
+            <li>물에 빠지거나 쾌속선, 상어, 용암에 닿으면 게임 오버!</li>
+            <li>한 자리에 너무 오래 머물면 거대한 독수리가 날아옵니다! 🦅</li>
+            <li>희귀 물고기를 낚으면 <strong>엄청난 추가 점수와 콤보</strong>를 획득합니다!</li>
+            <li><strong>🤖 AI BOT 모드</strong>를 켜면 인공지능이 스스로 길을 찾고 낚시합니다.</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h4>🗺️ 5가지 환상적인 스테이지</h4>
+          <p>초원 시냇가 ➔ 트로피컬 산호초 ➔ 빙하 설원 ➔ 마그마 협곡 ➔ 2077 사이버 네온 리버</p>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-close-help-action">확인</button>
+    </div>
+  </div>
+
+  <!-- Game Over Screen Modal -->
+  <div id="gameover-modal" class="popup-modal" style="display: none;">
+    <div class="popup-content gameover-popup">
+      <div class="gameover-title">GAME OVER</div>
+      <div class="gameover-reason" id="gameover-reason">물에 풍덩 빠졌습니다! 💦</div>
+      
+      <div class="score-summary">
+        <div class="summary-item">
+          <span class="label">최종 점수</span>
+          <span class="value" id="final-score">0</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">도달 스테이지</span>
+          <span class="value" id="final-stage">STAGE 1</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">낚은 물고기</span>
+          <span class="value" id="final-fish">0마리</span>
+        </div>
+      </div>
+
+      <!-- Submit Score to Serverless Online Leaderboard -->
+      <div class="leaderboard-submit-box">
+        <label for="player-nickname">강태공 닉네임 등록 (온라인 랭킹):</label>
+        <div class="input-row">
+          <input type="text" id="player-nickname" placeholder="닉네임 입력 (최대 10자)" maxlength="10" />
+          <button id="btn-submit-score" class="btn-primary">랭킹 등록 🚀</button>
+        </div>
+        <div id="submit-status-msg" class="status-msg"></div>
+      </div>
+
+      <div class="gameover-actions">
+        <button id="btn-restart" class="btn-primary btn-large">다시 하기 (PLAY AGAIN) 🔄</button>
+        <button id="btn-view-ranks-from-gameover" class="btn-secondary">랭킹 확인 🏆</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Screen Overlay -->
+  <div id="start-overlay" class="start-overlay">
+    <div class="start-box">
+      <div class="game-logo">
+        <span class="logo-emoji">🎣</span>
+        <h1>CROSSY FISH</h1>
+        <p class="subtitle">길건너 친구들 3D 낚시 모험</p>
+      </div>
+      <div class="character-preview-card">
+        <div class="preview-badge">✨ 3D Three.js Voxel Adventure</div>
+        <p>물살을 건너고, 방해물을 피하며, 전설의 물고기를 낚아보세요!</p>
+      </div>
+      <button id="btn-start-game" class="btn-start-game">게임 시작 (TAP TO PLAY)</button>
+      <div class="start-features">
+        <span>🌤️ 실시간 날씨</span> • 
+        <span>🤖 AI 자동 플레이</span> • 
+        <span>🏆 온라인 랭킹</span> • 
+        <span>📱 모바일 완벽 지원</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

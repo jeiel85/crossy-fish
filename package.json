@@ -1,0 +1,18 @@
+{
+  "name": "crossy-fish",
+  "version": "1.0.0",
+  "description": "🎣 Crossy Fish - A 3D Voxel Crossy Road style fishing arcade game built with Three.js, dynamic weather, multi-stage biomes, mobile support, auto-play AI, and serverless online leaderboard!",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "canvas-confetti": "^1.9.4",
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "vite": "^8.2.2"
+  }
+}
