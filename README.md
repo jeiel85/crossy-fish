@@ -1,12 +1,12 @@
-# 🎣 Crossy Fish (길건너 친구들 3D 낚시 게임)
+# 🎣 Crossy Angler (길건너 친구들 감성 3D 낚시 게임)
 
 [![Three.js](https://img.shields.io/badge/Three.js-r185-black?style=for-the-badge&logo=three.js)](https://threejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![GitHub Pages](https://img.shields.io/badge/Deploy-GitHub%20Pages-22c55e?style=for-the-badge&logo=github)](https://jeiel85.github.io/crossy-fish/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-> **"길건너 친구들"의 경쾌한 점프 아케이드와 "낚시"의 손맛이 만났다!**  
-> Three.js로 구현된 복셀(Voxel) 3D 세계에서 물살을 건너고, 방해물을 피하며, 각 스테이지의 전설적인 물고기들을 낚아보세요!
+> **"길건너 친구들" 특유의 아기자기한 3D 복셀 아트 감성으로 즐기는 100% 리얼 손맛 낚시 게임!**  
+> 장애물 피하기는 그만! 평화로운 호숫가, 트로피컬 산호초, 얼어붙은 북극 빙하, 화산 칼데라, 2077 사이버 운하에서 찌를 던지고, 입질을 느끼며, 릴을 감아올리는 짜릿한 낚시를 즐겨보세요!
 
 🎮 **[라이브 데모 플레이하기 (Live Demo)](https://jeiel85.github.io/crossy-fish/)**
 
@@ -14,61 +14,57 @@
 
 ## ✨ 주요 특징 (Key Features)
 
-1. **🎲 Three.js 기반 3D 복셀 아트 & 아이소메트릭 뷰**
-   - 귀여운 강태공 캐릭터, 낚싯대, 찌, 물고기, 통나무, 연꽃잎, 쾌속선 등 풀 복셀 3D 모델링
-   - 부드러운 포물선 점프 애니메이션 및 착지 스쿼시 & 스트레치 효과
-   - PCF 소프트 섀도우 및 ACES Filmic 톤 매핑을 통한 고품질 비주얼
+1. **🎲 Three.js 기반 3D 복셀 아트 & 아이소메트릭 낚시터**
+   - 귀여운 복셀 강태공 캐릭터, 낚싯대, 찌, 유영하는 3D 물고기, 선착장과 수목 디오라마
+   - 직교 카메라(Orthographic Camera)를 통한 아늑하고 감각적인 시점
 
-2. **🌊 5가지 다채로운 스테이지 & 바이옴 (Biomes)**
-   - **STAGE 1: 에메랄드 시냇가 (Emerald Creek)** 🌲: 피라미, 붕어, 무지개 송어, 황금 잉어
-   - **STAGE 2: 트로피컬 산호초 (Tropical Reef)** 🏝️: 흰동가리, 블루탱, 청새치, 황금 가오리
-   - **STAGE 3: 빙하 설원 (Frozen Glacier)** ❄️: 빙어, 북극 송어, 대왕 킹크랩, 빙하 수호 고래
-   - **STAGE 4: 마그마 협곡 (Magma Inferno)** 🌋: 불 피라미, 용암 메기, 흑요석 아귀, 불사조 용어
-   - **STAGE 5: 사이버 2077 네온 (Cyber River)** 🏙️: 글리치 테트라, 홀로그램 농어, 사이버 샤크, 2077 메가 네온 웨일
+2. **🎯 타겟팅 캐스팅 & 유영 물고기 탐색**
+   - 물속에서 꼬리를 흔들며 헤엄치는 실제 3D 물고기들과 수면 파문(Ripples) 관찰
+   - 물 위 원하는 곳을 마우스 클릭 / 터치하거나 `CAST` 버튼으로 정밀하게 찌 투척
 
-3. **🎣 신개념 낚시 메커니즘**
-   - 물가나 통나무 위에서 찌를 던져 낚시를 진행합니다.
-   - 느낌표(`!`)와 함께 입질이 오면 게이지가 줄어들기 전에 낚아채어 물고기를 수집하세요.
-   - 희귀/전설 물고기를 낚으면 화려한 축하 폭죽과 함께 폭발적인 추가 점수를 획득합니다!
+3. **⚡ 짜릿한 챔질(Strike)과 텐션 릴링(Reeling) 손맛**
+   - 찌가 쑥 들어가며 **`!` 경고** 발생 시 즉시 챔질!
+   - 릴을 누르고 있으면 줄이 감기고, 떼면 풀리는 **줄 텐션 미니게임**
+   - 물고기의 저항에 맞춰 텐션을 **초록색 적정 구간(Sweet Spot)**에 유지하여 인양 진행도 100% 달성 시 물고기 포획!
+   - 모바일 기기 완벽 진동 햅틱 피드백 지원 (`navigator.vibrate`)
 
-4. **🌤️ 실시간 날씨 & 낮/밤 사이클 (Dynamic Weather)**
-   - **맑음 (Sunny)**: 따사로운 햇살과 맑은 수면
-   - **비 & 천둥 (Rain)**: 3D 빗줄기 파티클, 수면 파문, 번개 섬광 및 천둥 음향
-   - **눈 (Snow)**: 바람에 흩날리는 3D 눈송이 파티클과 차가운 색감
-   - **안개 (Misty Fog)**: 몽환적인 볼륨 안개
-   - **낮 / 밤 (Day & Night)**: 밤이 되면 어두운 밤하늘과 함께 낚싯대에 따뜻한 랜턴 조명이 켜집니다.
+4. **🗺️ 5가지 환상적인 낚시터 스테이지**
+   - **STAGE 1: 평화로운 에메랄드 호수 (Emerald Lake)** 🌲: 피라미, 붕어, 무지개 송어, 대왕 황금 잉어
+   - **STAGE 2: 트로피컬 산호초 라군 (Tropical Lagoon)** 🏝️: 흰동가리, 블루탱, 만타 가오리, 전설의 청새치
+   - **STAGE 3: 북극 빙하 얼음 낚시 (Glacier Ice Fishing)** ❄️: 빙어, 북극 곤들매기, 대왕 킹크랩, 빙하 수호 고래
+   - **STAGE 4: 화산 칼데라 용암 낚시 (Magma Caldera)** 🌋: 불 피라미, 용암 메기, 흑요석 아귀, 불사조 용어
+   - **STAGE 5: 사이버 2077 네온 운하 (Cyber Neon Canal)** 🏙️: 글리치 테트라, 홀로그램 농어, 사이버 샤크, 2077 메가 네온 웨일
+   - 상단의 ◀ ▶ 버튼으로 언제든지 자유롭게 낚시터 이동 가능!
 
-5. **🤖 스마트 AI 자동 플레이 (Auto-Play Bot)**
-   - 원클릭으로 켜고 끌 수 있는 인공지능 봇 모드 (`🤖 BOT: ON/OFF` or `B` 키)
-   - 전방 타일의 안전성, 움직이는 통나무의 착지 시점, 쾌속선의 충돌 경로를 예측하여 스스로 이동하고 낚시를 즐깁니다.
+5. **📖 어종 도감 (Fishdex) & 대어 기록 시스템**
+   - 총 20종의 물고기 수집 현황 및 도감 카드 확인
+   - 어획 시 실제 길이(cm)와 무게(kg)가 측정되며 개인 최대 크기(Max Size) 신기록 갱신 지원
 
-6. **🏆 서버리스 글로벌 온라인 랭킹 (Online Leaderboard)**
-   - 서버 구축 없이 Dreamlo REST API 기반으로 전 세계 플레이어의 점수를 실시간 집계합니다.
-   - 로컬 스토리지 자동 백업으로 오프라인 환경에서도 안전하게 기록이 보존됩니다.
+6. **🌤️ 실시간 날씨 & 낮/밤 사이클 (Dynamic Weather)**
+   - **맑음 (Sunny)**: 기본 날씨
+   - **비 (Rain)**: 빗줄기와 수면 파문, **입질 빈도 +30% 버프!**
+   - **눈 (Snow)** & **안개 (Fog)**
+   - **낮 / 밤 (Day & Night)**: 밤이 되면 어두운 밤하늘과 함께 낚싯대에 따뜻한 랜턴 조명 점등
 
-7. **📱 모바일 완벽 지원 & 반응형 뷰**
-   - 상/하/좌/우 화면 스와이프 제스처 이동
-   - 직관적인 화면 D-Pad 및 대형 🎣 CAST 액션 버튼
-   - 입질 및 조작 시 모바일 진동 햅틱 피드백 (`navigator.vibrate`)
-   - 아이폰/안드로이드 Safe Area 완벽 대응
+7. **🤖 스마트 AI 자동 낚시 모드 (Auto-Fishing)**
+   - 상단 `🤖 AUTO` 버튼 클릭 시 인공지능이 스스로 물고기를 찾아 찌를 던지고, 입질 시 챔질하며, 텐션을 완벽하게 유지하여 낚시를 진행하는 방치형/아쿠아리움 감상 모드 지원
 
-8. **🎵 100% Web Audio 신디사이저 사운드**
-   - 외부 음원 파일 다운로드 없이 브라우저 오디오 신디사이저로 구현된 경쾌한 8비트 레트로 사운드 (점프, 입질, 낚기 팡파르, 낙수, 천둥 등)
+8. **🏆 서버리스 글로벌 온라인 랭킹 (Online Leaderboard)**
+   - Dreamlo REST API 기반 서버리스 글로벌 랭킹 실시간 집계
+   - 로컬 스토리지 이중 백업으로 오프라인에서도 기록 안전 보존
 
 ---
 
 ## 🎮 조작법 (Controls)
 
-| 동작 | 데스크톱 키보드 | 모바일 / 터치 |
+| 동작 | 데스크톱 키보드 / 마우스 | 모바일 / 터치 |
 | :--- | :--- | :--- |
-| **전진 / 점프** | `W` 또는 `↑` | 화면 위로 스와이프 / 탭 / D-Pad ▲ |
-| **좌측 이동** | `A` 또는 `←` | 화면 좌측 스와이프 / D-Pad ◀ |
-| **우측 이동** | `D` 또는 `→` | 화면 우측 스와이프 / D-Pad ▶ |
-| **후진** | `S` 또는 `↓` | 화면 아래로 스와이프 / D-Pad ▼ |
-| **낚시 던지기 / 낚기** | `Spacebar` | 화면 우측 하단 `🎣 CAST` 버튼 |
-| **AI 봇 토글** | `B` 키 | 상단 `🤖 BOT` 버튼 |
-
-> ⚠️ **주의**: 한 자리에 너무 오래 머물거나 낚시만 하고 있으면 거대한 독수리(Eagle)가 날아와 낚아채 갑니다!
+| **타겟 찌 던지기** | 물 위 원하는 지점 마우스 클릭 | 물 위 원하는 지점 화면 터치 |
+| **기본 캐스팅** | `Spacebar` 또는 `CAST` 버튼 | 우측 하단 `CAST` 버튼 탭 |
+| **챔질 (Strike)** | `!` 입질 시 `Spacebar` / 클릭 | `!` 입질 시 `STRIKE` 버튼 탭 |
+| **릴 감기 (Reel)** | `Spacebar` 또는 `REEL` 버튼 누르고 있기 | `REEL` 버튼 누르고 있기 |
+| **낚시터 변경** | 상단 `◀`, `▶` 버튼 또는 `←`, `→` 키 | 상단 `◀`, `▶` 버튼 터치 |
+| **자동 낚시 봇** | 상단 `🤖 AUTO` 버튼 또는 `B` 키 | 상단 `🤖 AUTO` 버튼 터치 |
 
 ---
 
@@ -76,10 +72,10 @@
 
 - **3D Engine**: Three.js (r185)
 - **Bundler & Tooling**: Vite 8.x
-- **Particle & FX**: Canvas-Confetti, Three.js BufferGeometry Particle Systems
-- **Sound Engine**: Web Audio API Procedural Synthesizer
+- **Visual FX**: Canvas-Confetti, Three.js Particle Weather Systems
+- **Audio Engine**: Synthesized Web Audio API (외부 에셋 없이 0초 로딩)
 - **Leaderboard**: Serverless Dreamlo REST API + Web LocalStorage
-- **CI/CD**: GitHub Actions (`.github/workflows/deploy.yml`) -> GitHub Pages
+- **Deployment**: GitHub Actions (`deploy.yml`) -> GitHub Pages
 
 ---
 

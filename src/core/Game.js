@@ -1,14 +1,15 @@
 import * as THREE from 'three';
 import { Renderer } from './Renderer.js';
 import { AudioManager } from './AudioManager.js';
-import { WorldManager } from '../world/WorldManager.js';
-import { Player } from '../entities/Player.js';
-import { Eagle } from '../entities/Eagle.js';
+import { BIOMES, getBiomeByIndex } from '../world/Biomes.js';
+import { FishingSpot } from '../world/FishingSpot.js';
+import { createFishermanModel } from '../entities/VoxelModels.js';
+import { FishingMechanic } from '../systems/FishingMechanic.js';
 import { WeatherSystem } from '../systems/WeatherSystem.js';
 import { AutoPlayAI } from '../systems/AutoPlayAI.js';
+import { Fishdex } from '../systems/Fishdex.js';
 import { Leaderboard } from '../systems/Leaderboard.js';
 import { UIManager } from '../ui/UIManager.js';
-import { BIOMES } from '../world/Biomes.js';
 
 export class Game {
   constructor() {
@@ -20,33 +21,36 @@ export class Game {
     this.camera = this.renderer.camera;
 
     this.audio = new AudioManager();
+    this.fishdex = new Fishdex();
     this.leaderboard = new Leaderboard();
 
-    // 2. Game Entities & World
-    this.worldManager = new WorldManager(this);
-    this.player = new Player(this);
-    this.scene.add(this.player.mesh);
+    // 2. Stage & Fisherman Setup
+    this.currentStageIndex = 0;
+    this.currentBiome = BIOMES[0];
+    this.currentSpot = null;
 
-    this.eagle = new Eagle(this);
+    // Fisherman on the pier
+    this.fisherman = createFishermanModel();
+    this.fisherman.position.set(0, 0.15, -1.0);
+    this.scene.add(this.fisherman);
+
+    // 3. Mechanics & Systems
+    this.fishingMechanic = new FishingMechanic(this);
     this.weatherSystem = new WeatherSystem(this);
     this.autoPlayAI = new AutoPlayAI(this);
 
-    // 3. UI Manager
+    // 4. UI Manager
     this.ui = new UIManager(this);
 
-    // 4. Game State
-    this.state = 'START'; // 'START', 'PLAYING', 'GAMEOVER'
+    // 5. Game State
+    this.state = 'START'; // 'START', 'PLAYING'
     this.score = 0;
     this.fishCaught = 0;
-    this.maxZ = 0;
     this.clock = new THREE.Clock();
 
-    // Impatience / Eagle timer
-    this.inactivityTimer = 0;
-    this.maxInactivity = 8.5; // Seconds before eagle swoops
-
-    // Natural weather change timer
-    this.weatherCycleTimer = 0;
+    // Raycaster for water casting
+    this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2();
 
     // Start render loop
     this.animate = this.animate.bind(this);
@@ -56,63 +60,80 @@ export class Game {
   start() {
     this.audio.init();
     this.state = 'PLAYING';
-    this.score = 0;
-    this.fishCaught = 0;
-    this.maxZ = 0;
-    this.inactivityTimer = 0;
-
-    this.worldManager.init();
-    this.player.reset();
-    this.eagle.reset();
-    this.weatherSystem.setWeather('clear');
-
-    this.ui.updateScore(this.score, this.fishCaught);
-    this.ui.updateStage(this.worldManager.currentBiome, 1);
+    this.loadStage(0);
   }
 
-  restart() {
-    this.start();
-  }
+  loadStage(index) {
+    this.currentStageIndex = index;
+    this.currentBiome = getBiomeByIndex(index);
 
-  onPlayerAdvanced(z) {
-    if (z > this.maxZ) {
-      const delta = z - this.maxZ;
-      this.maxZ = z;
-      this.score += delta * 10;
-      this.ui.updateScore(this.score, this.fishCaught);
+    if (this.currentSpot) {
+      this.currentSpot.destroy();
     }
-    // Reset impatience timer on advancing
-    this.inactivityTimer = 0;
-    this.ui.updateDangerBar(0);
+
+    this.currentSpot = new FishingSpot(this.currentBiome, this);
+    this.fishingMechanic.reset();
+
+    // Adjust camera & lighting for the scenic diorama
+    this.weatherSystem.applyLightingAndFog();
+    this.ui.updateStage(this.currentBiome, this.currentStageIndex + 1);
   }
 
-  onFishCaught(fish) {
+  nextStage() {
+    const nextIdx = (this.currentStageIndex + 1) % BIOMES.length;
+    this.loadStage(nextIdx);
+  }
+
+  prevStage() {
+    const prevIdx = (this.currentStageIndex - 1 + BIOMES.length) % BIOMES.length;
+    this.loadStage(prevIdx);
+  }
+
+  onWaterClicked(event) {
+    if (this.state !== 'PLAYING') return;
+    if (this.fishingMechanic.state !== 'IDLE') {
+      if (this.fishingMechanic.state === 'STRIKE_WINDOW') {
+        this.fishingMechanic.hook();
+      }
+      return;
+    }
+
+    // Convert mouse/touch to normalized device coordinates (-1 to +1)
+    const clientX = event.clientX || (event.touches && event.touches[0]?.clientX);
+    const clientY = event.clientY || (event.touches && event.touches[0]?.clientY);
+    if (clientX === undefined || clientY === undefined) return;
+
+    this.mouse.x = (clientX / window.innerWidth) * 2 - 1;
+    this.mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    if (!this.currentSpot?.waterRaycastPlane) return;
+
+    const intersects = this.raycaster.intersectObject(this.currentSpot.waterRaycastPlane);
+    if (intersects.length > 0) {
+      const hit = intersects[0].point;
+      this.fishingMechanic.castTo(hit.x, hit.z);
+    } else {
+      this.fishingMechanic.castDefault();
+    }
+  }
+
+  onFishCaught(fish, sizeCm, weightKg) {
     this.fishCaught++;
     this.score += fish.points;
-    this.inactivityTimer = Math.max(0, this.inactivityTimer - 4.0); // Reward extra time for fishing
+
+    // Record in Fishdex
+    const { isNewSpecies, isNewRecord } = this.fishdex.recordCatch(fish, sizeCm);
 
     this.ui.updateScore(this.score, this.fishCaught);
-    this.ui.showCatchPopup(fish);
-  }
+    this.ui.showCatchPopup(fish, sizeCm, weightKg, isNewRecord, isNewSpecies);
 
-  onBiomeChanged(biome) {
-    const stageIdx = BIOMES.findIndex(b => b.id === biome.id) + 1;
-    this.ui.updateStage(biome, stageIdx);
-    this.weatherSystem.applyLightingAndFog();
-    this.ui.showTemporaryAlert(`🚩 ${biome.name} (STAGE ${stageIdx}) 진입!`);
-  }
-
-  onGameOver(reason) {
-    if (this.state === 'GAMEOVER') return;
-    this.state = 'GAMEOVER';
-    this.audio.playGameOver();
-
-    const stageIdx = BIOMES.findIndex(b => b.id === this.worldManager.currentBiome.id) + 1;
-    const stageStr = `STAGE ${stageIdx} (${this.worldManager.currentBiome.name})`;
-
+    // Refresh fish population in spot
     setTimeout(() => {
-      this.ui.showGameOver(reason, this.score, stageStr, this.fishCaught);
-    }, 600);
+      if (this.currentSpot) {
+        this.currentSpot.spawnFish(6);
+      }
+    }, 1200);
   }
 
   animate() {
@@ -120,34 +141,33 @@ export class Game {
     const dt = Math.min(this.clock.getDelta(), 0.1);
 
     if (this.state === 'PLAYING') {
-      // 1. Update Inactivity & Eagle Timer
-      this.inactivityTimer += dt;
-      const progress = this.inactivityTimer / this.maxInactivity;
-      this.ui.updateDangerBar(progress);
+      // 1. Update spot & swimming fish
+      const isBobberInWater = this.fishingMechanic.state === 'WAITING_BITE' || this.fishingMechanic.state === 'STRIKE_WINDOW';
+      const bobberPos = isBobberInWater ? this.fishingMechanic.bobber.position : null;
 
-      if (this.inactivityTimer >= this.maxInactivity && !this.eagle.isAttacking) {
-        this.eagle.trigger(this.player.mesh.position);
+      if (this.currentSpot) {
+        this.currentSpot.update(dt, bobberPos, isBobberInWater);
       }
 
-      // 2. Natural Weather Cycle (every 45s)
-      this.weatherCycleTimer += dt;
-      if (this.weatherCycleTimer > 45) {
-        this.weatherCycleTimer = 0;
-        const weathers = ['clear', 'rain', 'snow', 'fog'];
-        const next = weathers[Math.floor(Math.random() * weathers.length)];
-        this.weatherSystem.setWeather(next);
-      }
+      // 2. Update Fishing Mechanic
+      this.fishingMechanic.update(dt);
 
-      // 3. Update Entities & World
-      this.player.update(dt);
-      this.worldManager.update(dt, this.player);
-      this.eagle.update(dt, this.player);
-      this.weatherSystem.update(dt, this.player);
+      // 3. Update Weather
+      const fakePlayer = { mesh: this.fisherman };
+      this.weatherSystem.update(dt, fakePlayer);
+
+      // 4. Update Auto-Fishing AI
       this.autoPlayAI.update(dt);
+
+      // 5. Idle breathing for fisherman
+      const time = performance.now() * 0.003;
+      if (this.fisherman.userData.rodPivot && this.fishingMechanic.state === 'IDLE') {
+        this.fisherman.userData.rodPivot.rotation.x = Math.sin(time) * 0.05;
+      }
     }
 
-    // Always smooth update camera & render
-    this.renderer.updateCamera(this.player.mesh.position, dt);
+    // Camera centered on scenic pier
+    this.renderer.updateCamera({ x: 0, z: 4.5 }, dt);
     this.renderer.render();
   }
 }

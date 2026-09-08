@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Crossy Fish | 길건너 친구들 3D 낚시 게임</title>
+  <title>Crossy Angler | 길건너 친구들 감성 3D 낚시 게임</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +14,7 @@
   <!-- 3D Canvas Container -->
   <div id="canvas-container"></div>
 
-  <!-- In-Game HUD -->
+  <!-- In-Game Fishing HUD -->
   <div id="hud">
     <!-- Top Left: Score & Fish Counts -->
     <div class="hud-top-left">
@@ -26,17 +26,18 @@
         <span class="icon">🐟</span>
         <span id="fish-display" class="value">0</span>
       </div>
-      <div class="hud-card combo-card" id="combo-badge" style="display: none;">
-        <span id="combo-text">COMBO x2!</span>
-      </div>
     </div>
 
-    <!-- Top Center: Current Biome / Stage -->
+    <!-- Top Center: Scenic Stage Switcher -->
     <div class="hud-top-center">
-      <div id="stage-badge" class="stage-badge">
-        <span id="stage-icon">🌲</span>
-        <span id="stage-name">에메랄드 시냇가</span>
-        <span id="stage-step" class="stage-step">STAGE 1</span>
+      <div class="stage-switcher">
+        <button id="btn-prev-stage" class="stage-nav-btn" title="이전 낚시터">◀</button>
+        <div id="stage-badge" class="stage-badge">
+          <span id="stage-icon">🌲</span>
+          <span id="stage-name">평화로운 에메랄드 호수</span>
+          <span id="stage-step" class="stage-step">STAGE 1</span>
+        </div>
+        <button id="btn-next-stage" class="stage-nav-btn" title="다음 낚시터">▶</button>
       </div>
     </div>
 
@@ -51,63 +52,115 @@
       <button id="btn-sound" class="hud-btn" title="사운드 켜기/끄기 (Sound)">
         <span id="sound-icon">🔊</span>
       </button>
-      <button id="btn-autoplay" class="hud-btn bot-btn" title="AI 자동 플레이 모드 (Auto-Play)">
+      <button id="btn-autoplay" class="hud-btn bot-btn" title="자동 낚시 봇 모드 (Auto-Fishing)">
         <span class="bot-icon">🤖</span>
-        <span class="bot-label">BOT: OFF</span>
+        <span class="bot-label">AUTO: OFF</span>
+      </button>
+      <button id="btn-fishdex-open" class="hud-btn" title="어종 도감 (Fishdex)">
+        <span>📖</span>
       </button>
       <button id="btn-leaderboard-open" class="hud-btn" title="온라인 랭킹 (Leaderboard)">
         <span>🏆</span>
       </button>
-      <button id="btn-help-open" class="hud-btn" title="게임 방법 (How to Play)">
+      <button id="btn-help-open" class="hud-btn" title="도움말 (How to Play)">
         <span>❓</span>
       </button>
     </div>
 
-    <!-- Bottom Left / Mobile D-Pad Control -->
-    <div id="mobile-dpad" class="mobile-dpad">
-      <button class="dpad-btn dpad-up" data-dir="up">▲</button>
-      <div class="dpad-mid">
-        <button class="dpad-btn dpad-left" data-dir="left">◀</button>
-        <div class="dpad-center">●</div>
-        <button class="dpad-btn dpad-right" data-dir="right">▶</button>
-      </div>
-      <button class="dpad-btn dpad-down" data-dir="down">▼</button>
+    <!-- Bottom Center: Water Click Cast Hint -->
+    <div class="hud-bottom-center">
+      <div class="cast-hint">💡 물속 물고기 그림자를 클릭/터치하거나 [CAST] 버튼을 누르세요!</div>
     </div>
 
-    <!-- Bottom Right: Cast / Reel Action Button -->
+    <!-- Bottom Right: Cast / Strike / Reel Big Action Button -->
     <div class="hud-bottom-right">
-      <button id="btn-action-fish" class="action-btn" title="낚시하기 / 낚아채기 (Spacebar / Tap)">
-        <span class="btn-icon">🎣</span>
-        <span class="btn-text">CAST</span>
+      <button id="btn-action-fish" class="action-btn" title="찌 던지기 / 챔질 / 릴 감기 (Spacebar / Hold Tap)">
+        <span class="btn-icon" id="action-icon">🎣</span>
+        <span class="btn-text" id="action-text">CAST</span>
       </button>
     </div>
-
-    <!-- Eagle / Impatience Warning Indicator -->
-    <div id="danger-bar-container">
-      <div id="danger-bar"></div>
-    </div>
   </div>
 
-  <!-- Fishing Minigame Overlay / Notification Banner -->
-  <div id="fishing-overlay" class="fishing-overlay" style="display: none;">
-    <div class="catch-alert" id="catch-alert">
-      <div class="alert-exclamation">❗</div>
-      <div class="alert-msg">입질이 왔다! (TAP TO REEL!)</div>
-      <div class="reel-gauge-bg">
-        <div class="reel-gauge-fill" id="reel-gauge-fill"></div>
-        <div class="reel-target-zone"></div>
+  <!-- Strike Alert Overlay (When fish bites!) -->
+  <div id="strike-overlay" class="strike-overlay" style="display: none;">
+    <div class="strike-alert-box">
+      <div class="strike-exclamation">❗ 입질 발생 ❗</div>
+      <div class="strike-msg">지금 챔질하세요! (TAP NOW!)</div>
+      <div class="strike-gauge-bg">
+        <div class="strike-gauge-fill" id="strike-gauge-fill"></div>
       </div>
     </div>
   </div>
 
-  <!-- Floating Catch Announcement Card -->
+  <!-- Reeling Tension Mini-Game Modal Overlay -->
+  <div id="reeling-overlay" class="reeling-overlay" style="display: none;">
+    <div class="reeling-card">
+      <div class="reeling-header">
+        <span class="reeling-title">🎣 파이팅 중! (FIGHTING!)</span>
+        <span class="reeling-status" id="reeling-status-badge">SWEET SPOT</span>
+      </div>
+
+      <!-- Line Tension Meter -->
+      <div class="tension-section">
+        <div class="tension-labels">
+          <span class="loose-label">느슨함 (LOOSE)</span>
+          <span class="sweet-label">적정 구간 (PERFECT)</span>
+          <span class="danger-label">위험 (SNAPPING!)</span>
+        </div>
+        <div class="tension-bar-track">
+          <!-- Green Sweet Spot zone -->
+          <div class="tension-sweet-zone"></div>
+          <!-- Moving Indicator -->
+          <div class="tension-needle" id="tension-needle" style="left: 50%;"></div>
+        </div>
+      </div>
+
+      <!-- Catch Progress Bar -->
+      <div class="catch-progress-section">
+        <div class="progress-label-row">
+          <span>인양 진행도 (CATCH PROGRESS)</span>
+          <span id="catch-progress-percent">15%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill" style="width: 15%;"></div>
+        </div>
+      </div>
+
+      <div class="reeling-tip">
+        [REEL 버튼] 또는 [스페이스바]를 <strong>누르고 있으면 줄이 감기고</strong>, <strong>떼면 풀립니다!</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Catch Announcement Popup Card -->
   <div id="catch-popup" class="catch-popup" style="display: none;">
     <div class="catch-popup-content">
       <div class="catch-stars" id="catch-stars">★★★</div>
       <div class="catch-fish-emoji" id="catch-emoji">🐟</div>
       <div class="catch-fish-name" id="catch-name">무지개 송어</div>
+      <div class="catch-fish-stats" id="catch-stats">길이: 42.5cm | 무게: 1.2kg</div>
       <div class="catch-fish-rarity" id="catch-rarity">RARE CATCH!</div>
-      <div class="catch-fish-pts" id="catch-pts">+150 PTS</div>
+      <div class="catch-fish-record" id="catch-record" style="display: none;">★ 신기록 달성! ★</div>
+      <div class="catch-fish-pts" id="catch-pts">+180 PTS</div>
+    </div>
+  </div>
+
+  <!-- Fishdex (어종 도감) Modal -->
+  <div id="fishdex-modal" class="popup-modal" style="display: none;">
+    <div class="popup-content fishdex-popup">
+      <div class="modal-header">
+        <h3>📖 어종 도감 (Fishdex)</h3>
+        <button class="btn-close-x" id="btn-close-fishdex">&times;</button>
+      </div>
+      <div class="fishdex-summary" id="fishdex-summary">
+        수집한 물고기: 0 / 20종 | 총 어획량: 0마리
+      </div>
+      <div class="fishdex-grid" id="fishdex-grid">
+        <!-- Filled dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="btn-close-fishdex-action">닫기</button>
+      </div>
     </div>
   </div>
 
@@ -122,7 +175,7 @@
         </button>
         <button class="weather-opt" data-weather="rain">
           <span class="opt-icon">🌧️</span>
-          <span>비 & 천둥 (Rain)</span>
+          <span>비 & 천둥 (Rain +30% 입질)</span>
         </button>
         <button class="weather-opt" data-weather="snow">
           <span class="opt-icon">❄️</span>
@@ -145,7 +198,7 @@
   <div id="leaderboard-modal" class="popup-modal" style="display: none;">
     <div class="popup-content leaderboard-popup">
       <div class="modal-header">
-        <h3>🏆 글로벌 온라인 랭킹</h3>
+        <h3>🏆 글로벌 낚시 랭킹</h3>
         <button class="btn-close-x" id="btn-close-leaderboard">&times;</button>
       </div>
       <div class="leaderboard-tabs">
@@ -157,10 +210,10 @@
           <thead>
             <tr>
               <th>순위</th>
-              <th>강태공 (닉네임)</th>
+              <th>강태공 닉네임</th>
               <th>점수</th>
-              <th>스테이지</th>
-              <th>물고기</th>
+              <th>주 낚시터</th>
+              <th>어획수</th>
             </tr>
           </thead>
           <tbody id="leaderboard-rows">
@@ -168,6 +221,17 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Submit Score to Serverless Online Leaderboard -->
+      <div class="leaderboard-submit-box">
+        <label for="player-nickname">내 낚시 기록 온라인 랭킹에 등록:</label>
+        <div class="input-row">
+          <input type="text" id="player-nickname" placeholder="강태공 닉네임 (최대 10자)" maxlength="10" />
+          <button id="btn-submit-score" class="btn-primary">랭킹 등록 🚀</button>
+        </div>
+        <div id="submit-status-msg" class="status-msg"></div>
+      </div>
+
       <div class="modal-footer">
         <button id="btn-refresh-ranks" class="btn-secondary">🔄 새로고침</button>
         <button class="btn-primary" id="btn-close-ranks">닫기</button>
@@ -179,71 +243,35 @@
   <div id="help-modal" class="popup-modal" style="display: none;">
     <div class="popup-content help-popup">
       <div class="modal-header">
-        <h3>📖 게임 방법 & 조작법</h3>
+        <h3>📖 Crossy Angler 게임 가이드</h3>
         <button class="btn-close-x" id="btn-close-help">&times;</button>
       </div>
       <div class="help-body">
         <div class="help-section">
-          <h4>🎮 조작 가이드</h4>
+          <h4>🎣 1. 탐색 및 캐스팅 (Cast)</h4>
           <ul>
-            <li><strong>이동</strong>: 키보드 <code>W A S D</code> / <code>방향키</code> 또는 화면 스와이프 / D-패드</li>
-            <li><strong>낚시</strong>: 물가나 통나무/선착장에서 <code>스페이스바</code> 또는 <code>🎣 CAST</code> 버튼</li>
-            <li><strong>입질 시</strong>: 느낌표(!)가 뜨면 즉시 버튼을 눌러 물고기를 낚아채세요!</li>
+            <li>물속에서 헤엄치는 물고기 그림자를 클릭/터치하거나 <code>CAST</code> 버튼(스페이스바)을 눌러 찌를 던집니다.</li>
+            <li>찌가 물고기 가까이에 떨어질수록 더 빠르게 입질이 옵니다!</li>
           </ul>
         </div>
         <div class="help-section">
-          <h4>🌊 위험 요소 & 팁</h4>
+          <h4>⚡ 2. 챔질 (Strike) & 릴링 (Reel)</h4>
           <ul>
-            <li>물에 빠지거나 쾌속선, 상어, 용암에 닿으면 게임 오버!</li>
-            <li>한 자리에 너무 오래 머물면 거대한 독수리가 날아옵니다! 🦅</li>
-            <li>희귀 물고기를 낚으면 <strong>엄청난 추가 점수와 콤보</strong>를 획득합니다!</li>
-            <li><strong>🤖 AI BOT 모드</strong>를 켜면 인공지능이 스스로 길을 찾고 낚시합니다.</li>
+            <li>찌가 쑥 들어가며 <strong>`!` 경고</strong>가 뜨면 빠르게 버튼을 눌러 챔질하세요!</li>
+            <li>파이팅이 시작되면 <code>REEL</code> 버튼을 누르고 있어 줄을 감고, 떼서 줄을 풀어주며 <strong>게이지의 초록색 구간(Sweet Spot)</strong>을 유지하세요.</li>
+            <li>인양 진행도 100%를 달성하면 물고기를 낚아 올립니다!</li>
           </ul>
         </div>
         <div class="help-section">
-          <h4>🗺️ 5가지 환상적인 스테이지</h4>
-          <p>초원 시냇가 ➔ 트로피컬 산호초 ➔ 빙하 설원 ➔ 마그마 협곡 ➔ 2077 사이버 네온 리버</p>
+          <h4>🗺️ 3. 5개 낚시터 & 날씨</h4>
+          <p>상단의 ◀ ▶ 버튼으로 호수, 산호초 라군, 빙하 얼음낚시, 용암 칼데라, 2077 사이버 운하를 여행할 수 있습니다. 비가 내리면 입질 속도가 30% 빨라집니다!</p>
+        </div>
+        <div class="help-section">
+          <h4>🤖 4. 자동 낚시 (Auto-Fishing)</h4>
+          <p>상단 <code>🤖 AUTO</code> 버튼을 켜면 AI가 스스로 물고기를 찾아 던지고 릴을 감아올립니다.</p>
         </div>
       </div>
       <button class="btn-primary" id="btn-close-help-action">확인</button>
-    </div>
-  </div>
-
-  <!-- Game Over Screen Modal -->
-  <div id="gameover-modal" class="popup-modal" style="display: none;">
-    <div class="popup-content gameover-popup">
-      <div class="gameover-title">GAME OVER</div>
-      <div class="gameover-reason" id="gameover-reason">물에 풍덩 빠졌습니다! 💦</div>
-      
-      <div class="score-summary">
-        <div class="summary-item">
-          <span class="label">최종 점수</span>
-          <span class="value" id="final-score">0</span>
-        </div>
-        <div class="summary-item">
-          <span class="label">도달 스테이지</span>
-          <span class="value" id="final-stage">STAGE 1</span>
-        </div>
-        <div class="summary-item">
-          <span class="label">낚은 물고기</span>
-          <span class="value" id="final-fish">0마리</span>
-        </div>
-      </div>
-
-      <!-- Submit Score to Serverless Online Leaderboard -->
-      <div class="leaderboard-submit-box">
-        <label for="player-nickname">강태공 닉네임 등록 (온라인 랭킹):</label>
-        <div class="input-row">
-          <input type="text" id="player-nickname" placeholder="닉네임 입력 (최대 10자)" maxlength="10" />
-          <button id="btn-submit-score" class="btn-primary">랭킹 등록 🚀</button>
-        </div>
-        <div id="submit-status-msg" class="status-msg"></div>
-      </div>
-
-      <div class="gameover-actions">
-        <button id="btn-restart" class="btn-primary btn-large">다시 하기 (PLAY AGAIN) 🔄</button>
-        <button id="btn-view-ranks-from-gameover" class="btn-secondary">랭킹 확인 🏆</button>
-      </div>
     </div>
   </div>
 
@@ -252,19 +280,20 @@
     <div class="start-box">
       <div class="game-logo">
         <span class="logo-emoji">🎣</span>
-        <h1>CROSSY FISH</h1>
-        <p class="subtitle">길건너 친구들 3D 낚시 모험</p>
+        <h1>CROSSY ANGLER</h1>
+        <p class="subtitle">길건너 친구들 감성 3D 낚시 모험</p>
       </div>
       <div class="character-preview-card">
-        <div class="preview-badge">✨ 3D Three.js Voxel Adventure</div>
-        <p>물살을 건너고, 방해물을 피하며, 전설의 물고기를 낚아보세요!</p>
+        <div class="preview-badge">✨ 100% 손맛 중심 3D 복셀 낚시 게임</div>
+        <p>복잡한 길건너기는 그만! 평화로운 낚시터에서 물고기를 탐색하고, 찌를 던져 전설의 대어를 낚아보세요!</p>
       </div>
-      <button id="btn-start-game" class="btn-start-game">게임 시작 (TAP TO PLAY)</button>
+      <button id="btn-start-game" class="btn-start-game">낚시 시작하기 (START FISHING) 🐟</button>
       <div class="start-features">
-        <span>🌤️ 실시간 날씨</span> • 
-        <span>🤖 AI 자동 플레이</span> • 
-        <span>🏆 온라인 랭킹</span> • 
-        <span>📱 모바일 완벽 지원</span>
+        <span>🌊 5가지 낚시터</span> • 
+        <span>🌧️ 실시간 날씨</span> • 
+        <span>🤖 자동 낚시</span> • 
+        <span>📖 어종 도감</span> • 
+        <span>🏆 온라인 랭킹</span>
       </div>
     </div>
   </div>

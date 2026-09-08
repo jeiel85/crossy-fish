@@ -1,14 +1,13 @@
 import confetti from 'canvas-confetti';
+import { BIOMES } from '../world/Biomes.js';
 
 export class UIManager {
   constructor(game) {
     this.game = game;
 
-    // HUD Elements
+    // HUD
     this.scoreDisplay = document.getElementById('score-display');
     this.fishDisplay = document.getElementById('fish-display');
-    this.comboBadge = document.getElementById('combo-badge');
-    this.comboText = document.getElementById('combo-text');
     this.stageName = document.getElementById('stage-name');
     this.stageStep = document.getElementById('stage-step');
     this.stageIcon = document.getElementById('stage-icon');
@@ -17,40 +16,42 @@ export class UIManager {
     this.timeIcon = document.getElementById('time-icon');
     this.soundIcon = document.getElementById('sound-icon');
     this.btnAutoplay = document.getElementById('btn-autoplay');
-    this.dangerBar = document.getElementById('danger-bar');
 
-    // Action & Mobile
+    // Action button
     this.btnActionFish = document.getElementById('btn-action-fish');
-    this.mobileDpad = document.getElementById('mobile-dpad');
+    this.actionIcon = document.getElementById('action-icon');
+    this.actionText = document.getElementById('action-text');
 
-    // Overlays & Alerts
-    this.fishingOverlay = document.getElementById('fishing-overlay');
-    this.reelGaugeFill = document.getElementById('reel-gauge-fill');
+    // Overlays
+    this.strikeOverlay = document.getElementById('strike-overlay');
+    this.strikeGaugeFill = document.getElementById('strike-gauge-fill');
+    this.reelingOverlay = document.getElementById('reeling-overlay');
+    this.tensionNeedle = document.getElementById('tension-needle');
+    this.progressFill = document.getElementById('progress-fill');
+    this.catchProgressPercent = document.getElementById('catch-progress-percent');
+    this.reelingStatusBadge = document.getElementById('reeling-status-badge');
+
+    // Catch Popup
     this.catchPopup = document.getElementById('catch-popup');
     this.catchName = document.getElementById('catch-name');
     this.catchEmoji = document.getElementById('catch-emoji');
+    this.catchStats = document.getElementById('catch-stats');
     this.catchRarity = document.getElementById('catch-rarity');
+    this.catchRecord = document.getElementById('catch-record');
     this.catchPts = document.getElementById('catch-pts');
     this.catchStars = document.getElementById('catch-stars');
 
     // Modals
     this.startOverlay = document.getElementById('start-overlay');
-    this.gameoverModal = document.getElementById('gameover-modal');
-    this.gameoverReason = document.getElementById('gameover-reason');
-    this.finalScore = document.getElementById('final-score');
-    this.finalStage = document.getElementById('final-stage');
-    this.finalFish = document.getElementById('final-fish');
-    this.playerNickname = document.getElementById('player-nickname');
-    this.submitStatusMsg = document.getElementById('submit-status-msg');
-
     this.weatherModal = document.getElementById('weather-modal');
+    this.fishdexModal = document.getElementById('fishdex-modal');
+    this.fishdexGrid = document.getElementById('fishdex-grid');
+    this.fishdexSummary = document.getElementById('fishdex-summary');
     this.leaderboardModal = document.getElementById('leaderboard-modal');
     this.leaderboardRows = document.getElementById('leaderboard-rows');
     this.helpModal = document.getElementById('help-modal');
 
     this.activeLeaderboardTab = 'global';
-    this.touchStartX = 0;
-    this.touchStartY = 0;
 
     this.initEventListeners();
   }
@@ -62,34 +63,98 @@ export class UIManager {
       this.game.start();
     });
 
-    // 2. Restart Game
-    document.getElementById('btn-restart')?.addEventListener('click', () => {
-      this.gameoverModal.style.display = 'none';
-      this.game.restart();
+    // 2. Stage Switcher
+    document.getElementById('btn-prev-stage')?.addEventListener('click', () => {
+      this.game.prevStage();
+    });
+    document.getElementById('btn-next-stage')?.addEventListener('click', () => {
+      this.game.nextStage();
     });
 
-    // 3. Cast / Reel Action Button
-    this.btnActionFish.addEventListener('click', (e) => {
+    // 3. Canvas Water Click / Touch Targeting
+    const canvasContainer = document.getElementById('canvas-container');
+    canvasContainer.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('#hud') || e.target.closest('.popup-modal')) return;
+      this.game.onWaterClicked(e);
+    });
+
+    // 4. Action Button Handling (Cast, Strike, Reel Hold)
+    const handleActionDown = (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      this.game.player.startFishing();
+      const mechanic = this.game.fishingMechanic;
+
+      if (mechanic.state === 'IDLE') {
+        mechanic.castDefault();
+      } else if (mechanic.state === 'STRIKE_WINDOW') {
+        mechanic.hook();
+      } else if (mechanic.state === 'REELING') {
+        mechanic.setReeling(true);
+        this.btnActionFish.classList.add('active-hold');
+      }
+    };
+
+    const handleActionUp = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const mechanic = this.game.fishingMechanic;
+      if (mechanic.state === 'REELING') {
+        mechanic.setReeling(false);
+        this.btnActionFish.classList.remove('active-hold');
+      }
+    };
+
+    this.btnActionFish.addEventListener('mousedown', handleActionDown);
+    window.addEventListener('mouseup', handleActionUp);
+    this.btnActionFish.addEventListener('touchstart', handleActionDown, { passive: false });
+    window.addEventListener('touchend', handleActionUp, { passive: false });
+
+    // 5. Keyboard Spacebar
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && !e.repeat) {
+        e.preventDefault();
+        const mechanic = this.game.fishingMechanic;
+        if (mechanic.state === 'IDLE') mechanic.castDefault();
+        else if (mechanic.state === 'STRIKE_WINDOW') mechanic.hook();
+        else if (mechanic.state === 'REELING') {
+          mechanic.setReeling(true);
+          this.btnActionFish.classList.add('active-hold');
+        }
+      } else if (e.code === 'KeyB') {
+        this.btnAutoplay.click();
+      } else if (e.code === 'ArrowLeft') {
+        this.game.prevStage();
+      } else if (e.code === 'ArrowRight') {
+        this.game.nextStage();
+      }
     });
 
-    // 4. Auto-Play Bot Toggle
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') {
+        const mechanic = this.game.fishingMechanic;
+        if (mechanic.state === 'REELING') {
+          mechanic.setReeling(false);
+          this.btnActionFish.classList.remove('active-hold');
+        }
+      }
+    });
+
+    // 6. Auto-Fishing Bot
     this.btnAutoplay.addEventListener('click', (e) => {
       e.stopPropagation();
       const active = this.game.autoPlayAI.toggle();
       this.btnAutoplay.classList.toggle('active', active);
-      this.btnAutoplay.querySelector('.bot-label').textContent = active ? 'BOT: ON' : 'BOT: OFF';
+      this.btnAutoplay.querySelector('.bot-label').textContent = active ? 'AUTO: ON' : 'AUTO: OFF';
     });
 
-    // 5. Sound Mute Toggle
+    // 7. Sound Toggle
     document.getElementById('btn-sound')?.addEventListener('click', (e) => {
       e.stopPropagation();
       const muted = this.game.audio.toggleMute();
       this.soundIcon.textContent = muted ? '🔇' : '🔊';
     });
 
-    // 6. Weather Modal Open & Close
+    // 8. Weather Selector
     document.getElementById('btn-weather')?.addEventListener('click', (e) => {
       e.stopPropagation();
       this.weatherModal.style.display = 'flex';
@@ -106,7 +171,7 @@ export class UIManager {
       });
     });
 
-    // 7. Day / Night Cycle Toggle
+    // 9. Day / Night Toggle
     document.getElementById('btn-time-cycle')?.addEventListener('click', (e) => {
       e.stopPropagation();
       this.game.weatherSystem.toggleDayNight();
@@ -115,7 +180,18 @@ export class UIManager {
       this.game.weatherSystem.toggleDayNight();
     });
 
-    // 8. Online Leaderboard Modal
+    // 10. Fishdex Modal
+    document.getElementById('btn-fishdex-open')?.addEventListener('click', () => {
+      this.openFishdex();
+    });
+    document.getElementById('btn-close-fishdex')?.addEventListener('click', () => {
+      this.fishdexModal.style.display = 'none';
+    });
+    document.getElementById('btn-close-fishdex-action')?.addEventListener('click', () => {
+      this.fishdexModal.style.display = 'none';
+    });
+
+    // 11. Leaderboard Modal
     document.getElementById('btn-leaderboard-open')?.addEventListener('click', () => {
       this.openLeaderboard();
     });
@@ -125,14 +201,10 @@ export class UIManager {
     document.getElementById('btn-close-ranks')?.addEventListener('click', () => {
       this.leaderboardModal.style.display = 'none';
     });
-    document.getElementById('btn-view-ranks-from-gameover')?.addEventListener('click', () => {
-      this.openLeaderboard();
-    });
     document.getElementById('btn-refresh-ranks')?.addEventListener('click', () => {
       this.refreshLeaderboard();
     });
 
-    // Leaderboard Tabs
     document.getElementById('tab-global')?.addEventListener('click', () => {
       this.activeLeaderboardTab = 'global';
       document.getElementById('tab-global').classList.add('active');
@@ -146,23 +218,25 @@ export class UIManager {
       this.refreshLeaderboard();
     });
 
-    // 9. Submit Score
+    // Submit Score
     document.getElementById('btn-submit-score')?.addEventListener('click', async () => {
-      const name = this.playerNickname.value.trim() || 'Angler';
+      const input = document.getElementById('player-nickname');
+      const status = document.getElementById('submit-status-msg');
+      const name = input.value.trim() || '강태공';
       const score = this.game.score;
       const stage = this.stageStep.textContent;
       const fish = this.game.fishCaught;
 
-      this.submitStatusMsg.textContent = '랭킹 등록 중... ⏳';
-      this.submitStatusMsg.style.color = '#38bdf8';
+      status.textContent = '랭킹 등록 중... ⏳';
+      status.style.color = '#38bdf8';
 
       const res = await this.game.leaderboard.submitScore(name, score, stage, fish);
-      this.submitStatusMsg.textContent = res.message;
-      this.submitStatusMsg.style.color = '#4ade80';
-      document.getElementById('btn-submit-score').disabled = true;
+      status.textContent = res.message;
+      status.style.color = '#4ade80';
+      await this.refreshLeaderboard();
     });
 
-    // 10. Help Modal
+    // 12. Help Modal
     document.getElementById('btn-help-open')?.addEventListener('click', () => {
       this.helpModal.style.display = 'flex';
     });
@@ -172,92 +246,6 @@ export class UIManager {
     document.getElementById('btn-close-help-action')?.addEventListener('click', () => {
       this.helpModal.style.display = 'none';
     });
-
-    // 11. Mobile D-Pad Buttons
-    document.querySelectorAll('.dpad-btn').forEach((btn) => {
-      btn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        const dir = btn.dataset.dir;
-        this.handleDirectionInput(dir);
-      });
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const dir = btn.dataset.dir;
-        this.handleDirectionInput(dir);
-      });
-    });
-
-    // 12. Keyboard Controls
-    window.addEventListener('keydown', (e) => {
-      if (this.game.state !== 'PLAYING') return;
-
-      switch (e.code) {
-        case 'ArrowUp':
-        case 'KeyW':
-          this.game.player.hop(0, 1);
-          break;
-        case 'ArrowDown':
-        case 'KeyS':
-          this.game.player.hop(0, -1);
-          break;
-        case 'ArrowLeft':
-        case 'KeyA':
-          this.game.player.hop(-1, 0);
-          break;
-        case 'ArrowRight':
-        case 'KeyD':
-          this.game.player.hop(1, 0);
-          break;
-        case 'Space':
-          e.preventDefault();
-          this.game.player.startFishing();
-          break;
-        case 'KeyB':
-          this.btnAutoplay.click();
-          break;
-      }
-    });
-
-    // 13. Touch Swipe Detection
-    window.addEventListener('touchstart', (e) => {
-      if (e.target.closest('#hud') || e.target.closest('.popup-modal')) return;
-      this.touchStartX = e.touches[0].clientX;
-      this.touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    window.addEventListener('touchend', (e) => {
-      if (e.target.closest('#hud') || e.target.closest('.popup-modal')) return;
-      if (this.game.state !== 'PLAYING') return;
-
-      const deltaX = e.changedTouches[0].clientX - this.touchStartX;
-      const deltaY = e.changedTouches[0].clientY - this.touchStartY;
-      const absX = Math.abs(deltaX);
-      const absY = Math.abs(deltaY);
-
-      // Minimum swipe distance
-      if (Math.max(absX, absY) > 28) {
-        if (absX > absY) {
-          if (deltaX > 0) this.game.player.hop(1, 0); // Right
-          else this.game.player.hop(-1, 0); // Left
-        } else {
-          if (deltaY < 0) this.game.player.hop(0, 1); // Up / Forward
-          else this.game.player.hop(0, -1); // Down / Back
-        }
-      } else {
-        // Quick Tap without dragging = Hop Forward
-        this.game.player.hop(0, 1);
-      }
-    }, { passive: true });
-  }
-
-  handleDirectionInput(dir) {
-    if (this.game.state !== 'PLAYING') return;
-    switch (dir) {
-      case 'up': this.game.player.hop(0, 1); break;
-      case 'down': this.game.player.hop(0, -1); break;
-      case 'left': this.game.player.hop(-1, 0); break;
-      case 'right': this.game.player.hop(1, 0); break;
-    }
   }
 
   updateScore(score, fish) {
@@ -272,85 +260,109 @@ export class UIManager {
   }
 
   updateWeatherIndicator(weatherType, isNight) {
-    const weatherEmojis = {
-      clear: '☀️',
-      rain: '🌧️',
-      snow: '❄️',
-      fog: '🌫️'
-    };
+    const weatherEmojis = { clear: '☀️', rain: '🌧️', snow: '❄️', fog: '🌫️' };
     this.weatherIcon.textContent = weatherEmojis[weatherType] || '☀️';
     this.timeIcon.textContent = isNight ? '🌙' : '🌤️';
   }
 
-  setActionButtonState(state) {
-    if (state === 'biting') {
-      this.btnActionFish.className = 'action-btn reeling';
-      this.btnActionFish.querySelector('.btn-icon').textContent = '❗';
-      this.btnActionFish.querySelector('.btn-text').textContent = 'REEL!';
-    } else if (state === 'casting') {
-      this.btnActionFish.className = 'action-btn reeling';
-      this.btnActionFish.querySelector('.btn-icon').textContent = '⏳';
-      this.btnActionFish.querySelector('.btn-text').textContent = 'WAIT...';
+  setFishingActionState(state) {
+    this.btnActionFish.className = 'action-btn';
+    if (state === 'strike') {
+      this.btnActionFish.classList.add('btn-strike');
+      this.actionIcon.textContent = '⚡';
+      this.actionText.textContent = 'STRIKE!';
+    } else if (state === 'reeling') {
+      this.btnActionFish.classList.add('btn-reeling');
+      this.actionIcon.textContent = '🔄';
+      this.actionText.textContent = 'REEL!';
+    } else if (state === 'casting' || state === 'waiting') {
+      this.actionIcon.textContent = '⏳';
+      this.actionText.textContent = 'WAIT...';
     } else {
-      this.btnActionFish.className = 'action-btn';
-      this.btnActionFish.querySelector('.btn-icon').textContent = '🎣';
-      this.btnActionFish.querySelector('.btn-text').textContent = 'CAST';
+      this.actionIcon.textContent = '🎣';
+      this.actionText.textContent = 'CAST';
     }
   }
 
-  showBiteAlert(duration) {
-    this.fishingOverlay.style.display = 'block';
-    this.reelGaugeFill.style.width = '100%';
-    this.reelGaugeFill.style.transition = `width ${duration}s linear`;
-    requestAnimationFrame(() => {
-      this.reelGaugeFill.style.width = '0%';
-    });
+  showStrikeAlert() {
+    this.strikeOverlay.style.display = 'block';
+    this.strikeGaugeFill.style.width = '100%';
   }
 
-  hideBiteAlert() {
-    this.fishingOverlay.style.display = 'none';
+  updateStrikeGauge(ratio) {
+    this.strikeGaugeFill.style.width = `${Math.max(0, Math.min(100, ratio * 100))}%`;
   }
 
-  showCatchPopup(fish) {
+  hideStrikeAlert() {
+    this.strikeOverlay.style.display = 'none';
+  }
+
+  showReelModal(show) {
+    this.reelingOverlay.style.display = show ? 'block' : 'none';
+  }
+
+  updateTensionGauge(tension, progress, inSweetSpot) {
+    this.tensionNeedle.style.left = `${tension}%`;
+    this.progressFill.style.width = `${progress}%`;
+    this.catchProgressPercent.textContent = `${Math.round(progress)}%`;
+
+    if (tension > 80) {
+      this.reelingStatusBadge.className = 'reeling-status danger';
+      this.reelingStatusBadge.textContent = '위험! (RELEASE!)';
+    } else if (tension < 20) {
+      this.reelingStatusBadge.className = 'reeling-status loose';
+      this.reelingStatusBadge.textContent = '느슨함 (HOLD REEL!)';
+    } else {
+      this.reelingStatusBadge.className = 'reeling-status';
+      this.reelingStatusBadge.textContent = '적정 구간 (PERFECT!)';
+    }
+  }
+
+  showCatchPopup(fish, sizeCm, weightKg, isNewRecord, isNewSpecies) {
     this.catchName.textContent = fish.name;
     this.catchEmoji.textContent = fish.emoji;
+    this.catchStats.textContent = `길이: ${sizeCm}cm | 무게: ${weightKg}kg`;
     this.catchRarity.textContent = `${fish.rarity.toUpperCase()} CATCH!`;
     this.catchPts.textContent = `+${fish.points} PTS`;
+
+    if (isNewRecord || isNewSpecies) {
+      this.catchRecord.style.display = 'inline-block';
+      this.catchRecord.textContent = isNewSpecies ? '★ NEW SPECIES! ★' : '★ NEW RECORD SIZE! ★';
+    } else {
+      this.catchRecord.style.display = 'none';
+    }
 
     const stars = fish.rarity === 'legendary' ? '★★★★★' : (fish.rarity === 'rare' ? '★★★☆☆' : '★☆☆☆☆');
     this.catchStars.textContent = stars;
 
     this.catchPopup.style.display = 'block';
 
-    // Confetti on rare or legendary
-    if (fish.rarity === 'legendary' || fish.rarity === 'rare') {
-      confetti({
-        particleCount: fish.rarity === 'legendary' ? 80 : 35,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
-    }
+    confetti({
+      particleCount: fish.rarity === 'legendary' ? 90 : 40,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
 
     setTimeout(() => {
       this.catchPopup.style.display = 'none';
-    }, 1800);
+    }, 2200);
   }
 
   showTemporaryAlert(msg) {
     const alertBox = document.createElement('div');
     alertBox.style.cssText = `
       position: absolute;
-      top: 15%;
+      top: 18%;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.9);
+      background: rgba(15, 23, 42, 0.92);
       border: 2px solid #38bdf8;
       color: #fff;
-      padding: 10px 20px;
+      padding: 10px 22px;
       border-radius: 999px;
       font-weight: 700;
       font-size: 14px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
       z-index: 1000;
       pointer-events: none;
       animation: bounceIn 0.25s ease;
@@ -360,22 +372,41 @@ export class UIManager {
 
     setTimeout(() => {
       alertBox.remove();
-    }, 1500);
+    }, 1600);
   }
 
-  updateDangerBar(progress) {
-    this.dangerBar.style.width = `${Math.min(100, Math.max(0, progress * 100))}%`;
-  }
+  openFishdex() {
+    this.fishdexModal.style.display = 'flex';
+    const totalCaught = this.game.fishdex.getTotalCaught();
+    const uniqueCount = this.game.fishdex.getUniqueSpeciesCount();
+    this.fishdexSummary.textContent = `수집한 물고기: ${uniqueCount} / 20종 | 총 어획량: ${totalCaught}마리`;
 
-  showGameOver(reason, score, stageName, fish) {
-    this.gameoverReason.textContent = reason;
-    this.finalScore.textContent = score;
-    this.finalStage.textContent = stageName;
-    this.finalFish.textContent = `${fish}마리`;
-    this.submitStatusMsg.textContent = '';
-    document.getElementById('btn-submit-score').disabled = false;
+    this.fishdexGrid.innerHTML = '';
+    BIOMES.forEach((biome) => {
+      biome.fishSpecies.forEach((fish) => {
+        const entry = this.game.fishdex.getEntry(fish.id);
+        const card = document.createElement('div');
 
-    this.gameoverModal.style.display = 'flex';
+        if (entry) {
+          card.className = 'fishdex-card unlocked';
+          card.innerHTML = `
+            <div class="card-emoji">${fish.emoji}</div>
+            <div class="card-name">${fish.name}</div>
+            <div class="card-count">${entry.count}마리 낚음</div>
+            <div class="card-max">최대: ${entry.maxSize}cm</div>
+          `;
+        } else {
+          card.className = 'fishdex-card locked';
+          card.innerHTML = `
+            <div class="card-emoji">❓</div>
+            <div class="card-name">${fish.name}</div>
+            <div class="card-count">미발견</div>
+            <div class="card-max">${biome.name.split(' ')[0]}</div>
+          `;
+        }
+        this.fishdexGrid.appendChild(card);
+      });
+    });
   }
 
   async openLeaderboard() {
@@ -385,7 +416,6 @@ export class UIManager {
 
   async refreshLeaderboard() {
     this.leaderboardRows.innerHTML = '<tr><td colspan="5" class="loading-td">랭킹 불러오는 중... 🎣</td></tr>';
-
     let list = [];
     if (this.activeLeaderboardTab === 'global') {
       list = await this.game.leaderboard.getOnlineScores();
@@ -394,18 +424,16 @@ export class UIManager {
     }
 
     if (!list || list.length === 0) {
-      this.leaderboardRows.innerHTML = '<tr><td colspan="5" class="loading-td">등록된 랭킹 기록이 없습니다.</td></tr>';
+      this.leaderboardRows.innerHTML = '<tr><td colspan="5" class="loading-td">등록된 기록이 없습니다.</td></tr>';
       return;
     }
 
     this.leaderboardRows.innerHTML = '';
     list.forEach((item, idx) => {
       const tr = document.createElement('tr');
-      const rankClass = idx === 0 ? 'rank-top1' : (idx === 1 ? 'rank-top2' : (idx === 2 ? 'rank-top3' : ''));
       const medal = idx === 0 ? '🥇 1' : (idx === 1 ? '🥈 2' : (idx === 2 ? '🥉 3' : `${idx + 1}`));
-
       tr.innerHTML = `
-        <td class="${rankClass}">${medal}</td>
+        <td>${medal}</td>
         <td><strong>${item.name}</strong></td>
         <td><strong style="color: #38bdf8">${item.score}</strong></td>
         <td>${item.details.split('|')[0] || '-'}</td>
