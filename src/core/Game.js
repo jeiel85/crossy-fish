@@ -167,10 +167,16 @@ export class Game {
       }
     }
 
-    // Camera smoothly follows player in scenic spot
-    const camTargetZ = THREE.MathUtils.clamp(this.player.mesh.position.z + 4.5, 2.5, 7.5);
-    const camTargetX = this.player.mesh.position.x * 0.45;
-    this.renderer.updateCamera({ x: camTargetX, z: camTargetZ }, dt);
+    // Camera smoothly follows player & bobber based on selected camera mode
+    const bobberPos = this.fishingMechanic.bobber.visible ? this.fishingMechanic.bobber.position : null;
+    this.renderer.updateCamera(this.player.mesh.position, dt, bobberPos);
     this.renderer.render();
+  }
+
+  cycleCameraMode() {
+    const mode = this.renderer.cycleCameraMode();
+    this.ui.updateCameraMode(mode);
+    this.ui.showTemporaryAlert(`🎥 시점 변경: ${mode.name} ${mode.icon}`);
+    return mode;
   }
 }

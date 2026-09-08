@@ -56,6 +56,10 @@
         <span class="bot-icon">🤖</span>
         <span class="bot-label">AUTO: OFF</span>
       </button>
+      <button id="btn-camera-view" class="hud-btn view-btn" title="시점 변경 (Camera View: V / C 키)">
+        <span class="view-icon">🎥</span>
+        <span id="view-mode-label" class="view-label">아이소</span>
+      </button>
       <button id="btn-fishdex-open" class="hud-btn" title="어종 도감 (Fishdex)">
         <span>📖</span>
       </button>
@@ -179,22 +183,46 @@
   <div id="weather-modal" class="popup-modal" style="display: none;">
     <div class="popup-content weather-popup">
       <h3>🌤️ 날씨 & 환경 선택</h3>
-      <div class="weather-grid">
-        <button class="weather-opt active" data-weather="clear">
+      <div class="weather-grid weather-grid-8">
+        <button class="weather-opt active" data-weather="sunny">
           <span class="opt-icon">☀️</span>
-          <span>맑음 (Sunny)</span>
+          <span>쾌청한 맑음</span>
+          <span class="opt-sub">기본 날씨</span>
         </button>
-        <button class="weather-opt" data-weather="rain">
+        <button class="weather-opt" data-weather="drizzle">
           <span class="opt-icon">🌧️</span>
-          <span>비 & 천둥 (Rain +30% 입질)</span>
+          <span>보슬비</span>
+          <span class="opt-sub">입질 +15%</span>
+        </button>
+        <button class="weather-opt" data-weather="storm">
+          <span class="opt-icon">⛈️</span>
+          <span>폭풍우 & 번개</span>
+          <span class="opt-sub">입질 +40% & 대어</span>
         </button>
         <button class="weather-opt" data-weather="snow">
           <span class="opt-icon">❄️</span>
-          <span>눈 (Snow)</span>
+          <span>함박눈</span>
+          <span class="opt-sub">겨울 정취</span>
         </button>
         <button class="weather-opt" data-weather="fog">
           <span class="opt-icon">🌫️</span>
-          <span>안개 (Misty Fog)</span>
+          <span>짙은 해무</span>
+          <span class="opt-sub">신비로운 안개</span>
+        </button>
+        <button class="weather-opt" data-weather="sunset">
+          <span class="opt-icon">🌅</span>
+          <span>황혼 노을</span>
+          <span class="opt-sub">골든아워 감성</span>
+        </button>
+        <button class="weather-opt" data-weather="night">
+          <span class="opt-icon">🌌</span>
+          <span>은하수 밤하늘</span>
+          <span class="opt-sub">야행성 발광 어종</span>
+        </button>
+        <button class="weather-opt" data-weather="cherry">
+          <span class="opt-icon">🌸</span>
+          <span>벚꽃비</span>
+          <span class="opt-sub">흩날리는 꽃잎</span>
         </button>
       </div>
       <div class="time-toggle-row">

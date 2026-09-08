@@ -136,6 +136,8 @@ export class UIManager {
         }
       } else if (e.code === 'KeyB') {
         this.btnAutoplay.click();
+      } else if (e.code === 'KeyV' || e.code === 'KeyC') {
+        this.game.cycleCameraMode();
       } else if (e.code === 'BracketLeft') {
         this.game.prevStage();
       } else if (e.code === 'BracketRight') {
@@ -235,7 +237,13 @@ export class UIManager {
       this.game.weatherSystem.toggleDayNight();
     });
 
-    // 10. Fishdex Modal
+    // 10. Camera Perspective Switcher
+    document.getElementById('btn-camera-view')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.game.cycleCameraMode();
+    });
+
+    // 11. Fishdex Modal
     document.getElementById('btn-fishdex-open')?.addEventListener('click', () => {
       this.openFishdex();
     });
@@ -315,9 +323,23 @@ export class UIManager {
   }
 
   updateWeatherIndicator(weatherType, isNight) {
-    const weatherEmojis = { clear: '☀️', rain: '🌧️', snow: '❄️', fog: '🌫️' };
+    const weatherEmojis = {
+      sunny: '☀️',
+      drizzle: '🌧️',
+      storm: '⛈️',
+      snow: '❄️',
+      fog: '🌫️',
+      sunset: '🌅',
+      night: '🌌',
+      cherry: '🌸'
+    };
     this.weatherIcon.textContent = weatherEmojis[weatherType] || '☀️';
-    this.timeIcon.textContent = isNight ? '🌙' : '🌤️';
+    this.timeIcon.textContent = (weatherType === 'night' || isNight) ? '🌙' : '🌤️';
+  }
+
+  updateCameraMode(mode) {
+    const label = document.getElementById('view-mode-label');
+    if (label) label.textContent = mode.name.split(' ')[0];
   }
 
   setFishingActionState(state) {

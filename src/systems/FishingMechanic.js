@@ -167,9 +167,16 @@ export class FishingMechanic {
     this.splashRing.visible = true;
     setTimeout(() => { this.splashRing.visible = false; }, 400);
 
-    // Weather bonus: Rain increases bite speed
+    // Weather bonus on bite speed
     const weather = this.game.weatherSystem.currentWeather;
-    const biteDelay = weather === 'rain' ? 1.0 + Math.random() * 1.5 : 1.8 + Math.random() * 2.5;
+    let biteDelay = 1.8 + Math.random() * 2.2;
+    if (weather === 'storm') {
+      biteDelay = 0.6 + Math.random() * 0.9; // +40% fast bite in storm!
+    } else if (weather === 'drizzle') {
+      biteDelay = 1.0 + Math.random() * 1.4; // +15% fast bite in drizzle!
+    } else if (weather === 'cherry') {
+      biteDelay = 1.2 + Math.random() * 1.6;
+    }
     this.biteTimer = biteDelay;
 
     // Pick closest fish or random fish from current spot
