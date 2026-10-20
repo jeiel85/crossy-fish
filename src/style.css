@@ -1091,3 +1091,22 @@ canvas {
   .action-btn .btn-icon { font-size: 26px; }
   .reeling-card { padding: 16px; }
 }
+
+/* Start Screen: GitHub repository link */
+.start-github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-decoration: none;
+  opacity: 0.85;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.start-github-link:hover,
+.start-github-link:focus-visible {
+  color: var(--text-main);
+  opacity: 1;
+}
