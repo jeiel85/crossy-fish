@@ -1,0 +1,17 @@
+{
+  "name": "Crossy Angler - 3D 복셀 낚시 게임",
+  "short_name": "Crossy Angler",
+  "description": "길건너 친구들 감성의 3D 복셀 낚시 아케이드 게임. 5개 낚시터, 실시간 날씨, 어종 도감, 온라인 랭킹.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0284c7",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
